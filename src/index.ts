@@ -17,3 +17,4 @@ export {
   type FailureKind,
   type GatewayErrorOptions,
 } from "./errors.js";
+export { executeWithRetry, type RetryOptions } from "./retry.js";
