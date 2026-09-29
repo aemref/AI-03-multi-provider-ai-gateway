@@ -6,6 +6,7 @@ import type {
   ProviderAdapter,
 } from "./contracts.js";
 import { GatewayError, normalizeProviderError } from "./errors.js";
+import type { RateLimiter } from "./rate-limiter.js";
 import { executeWithRetry } from "./retry.js";
 
 export interface GatewayOptions {
@@ -15,6 +16,7 @@ export interface GatewayOptions {
   readonly maxBackoffMs?: number;
   readonly sleep?: (milliseconds: number) => Promise<void>;
   readonly createRequestId?: () => string;
+  readonly rateLimiter?: RateLimiter;
 }
 
 const DEFAULT_OPTIONS = {
@@ -26,8 +28,10 @@ const DEFAULT_OPTIONS = {
 
 export class Gateway {
   readonly #adapters: readonly ProviderAdapter[];
-  readonly #options: Required<Omit<GatewayOptions, "sleep">> &
-    Pick<GatewayOptions, "sleep">;
+  readonly #options: Required<
+    Omit<GatewayOptions, "sleep" | "rateLimiter">
+  > &
+    Pick<GatewayOptions, "sleep" | "rateLimiter">;
 
   constructor(adapters: readonly ProviderAdapter[], options: GatewayOptions = {}) {
     if (adapters.length === 0) {
@@ -48,6 +52,9 @@ export class Gateway {
       maxBackoffMs: options.maxBackoffMs ?? DEFAULT_OPTIONS.maxBackoffMs,
       createRequestId: options.createRequestId ?? randomUUID,
       ...(options.sleep === undefined ? {} : { sleep: options.sleep }),
+      ...(options.rateLimiter === undefined
+        ? {}
+        : { rateLimiter: options.rateLimiter }),
     };
   }
 
@@ -55,6 +62,7 @@ export class Gateway {
     request: GatewayRequest,
     signal?: AbortSignal,
   ): Promise<GatewayResponse> {
+    this.#options.rateLimiter?.acquire();
     const requestId = this.#options.createRequestId();
     const failures: GatewayError[] = [];
 
@@ -86,4 +94,3 @@ export class Gateway {
     );
   }
 }
-

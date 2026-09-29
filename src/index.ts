@@ -25,3 +25,8 @@ export {
   type MockCall,
   type MockOutcome,
 } from "./mock-adapters.js";
+export {
+  TokenBucketRateLimiter,
+  type RateLimiter,
+  type TokenBucketOptions,
+} from "./rate-limiter.js";
