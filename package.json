@@ -20,7 +20,7 @@
     "clean": "rm -rf dist",
     "build": "npm run clean && tsc -p tsconfig.build.json",
     "check": "tsc -p tsconfig.json --noEmit",
-    "test": "npm run build && node --test 'dist/tests/**/*.test.js'",
+    "test": "npm run build && node --test dist/tests/*.test.js",
     "verify": "npm run check && npm test",
     "pack:check": "npm_config_cache=.cache/npm npm pack --dry-run"
   },
