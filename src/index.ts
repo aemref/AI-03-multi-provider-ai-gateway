@@ -1,5 +1,12 @@
 export const VERSION = "0.1.0";
 
+export {
+  CircuitBreaker,
+  withCircuitBreaker,
+  type CircuitBreakerOptions,
+  type CircuitState,
+} from "./circuit-breaker.js";
+
 export type {
   FinishReason,
   GatewayMessage,
