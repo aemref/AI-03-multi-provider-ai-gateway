@@ -6,11 +6,11 @@ intentionally outside this plan.
 
 ## 1. Gateway design and resilience
 
-- [ ] Define a provider adapter interface and shared request/response schema.
-- [ ] Classify failures and add timeout plus retry/backoff policies.
-- [ ] Verify fallback behavior with two mock adapters.
-- [ ] Add rate limiting, circuit breaking, and deterministic chaos tests.
-- [ ] Publish an architecture diagram and measured verification evidence.
+- [x] Define a provider adapter interface and shared request/response schema.
+- [x] Classify failures and add timeout plus retry/backoff policies.
+- [x] Verify fallback behavior with two mock adapters.
+- [x] Add rate limiting, circuit breaking, and deterministic chaos tests.
+- [x] Publish an architecture diagram and measured verification evidence.
 
 ## 2. Streaming and structured output
 
@@ -29,4 +29,3 @@ intentionally outside this plan.
 - [ ] Package the gateway for npm with SemVer and a changelog.
 - [ ] Report contract and integration test coverage.
 - [ ] Publish an integration guide and verified v1.0.0 release.
-
