@@ -1,5 +1,7 @@
 # AI-03 Multi-Provider AI Gateway
 
+[![CI](https://github.com/aemref/AI-03-multi-provider-ai-gateway/actions/workflows/ci.yml/badge.svg)](https://github.com/aemref/AI-03-multi-provider-ai-gateway/actions/workflows/ci.yml)
+
 A provider-neutral TypeScript gateway focused on explicit contracts, bounded
 retries, observable failures, and deterministic resilience tests. The project
 uses mock providers only: it needs no API keys, paid services, or network calls
@@ -12,6 +14,7 @@ Requirements: Node.js 20 or newer.
 ```bash
 npm ci
 npm run verify
+npm run pack:check
 ```
 
 ## Local example
