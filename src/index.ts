@@ -18,3 +18,10 @@ export {
   type GatewayErrorOptions,
 } from "./errors.js";
 export { executeWithRetry, type RetryOptions } from "./retry.js";
+export { Gateway, type GatewayOptions } from "./gateway.js";
+export {
+  createEchoMockAdapter,
+  ScriptedMockAdapter,
+  type MockCall,
+  type MockOutcome,
+} from "./mock-adapters.js";
