@@ -41,6 +41,16 @@ export {
   encodeServerSentEvent,
   SSE_HEADERS,
 } from "./sse.js";
+export {
+  parseStructuredOutput,
+  validateStructuredOutput,
+  type JsonPrimitive,
+  type JsonSchema,
+  type JsonSchemaType,
+  type JsonValue,
+  type ValidationIssue,
+  type ValidationResult,
+} from "./schema.js";
 export { Gateway, type GatewayOptions } from "./gateway.js";
 export {
   createEchoMockAdapter,
