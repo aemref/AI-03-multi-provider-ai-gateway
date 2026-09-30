@@ -5,6 +5,7 @@ import type {
   GatewayRequest,
   ProviderAdapter,
   ProviderContext,
+  StreamingProviderAdapter,
 } from "../src/contracts.js";
 import { GatewayError, normalizeProviderError } from "../src/errors.js";
 
@@ -59,3 +60,32 @@ test("unknown provider errors are normalized without leaking an object", () => {
   assert.equal(normalized.retryable, false);
 });
 
+test("streaming adapters emit portable delta, usage, and completion events", async () => {
+  const adapter: StreamingProviderAdapter = {
+    name: "stream-mock",
+    async generate() {
+      throw new Error("not used by this contract test");
+    },
+    async *stream(received, context) {
+      assert.equal(received, request);
+      assert.equal(context.requestId, "stream-1");
+      yield { type: "delta", content: "hello" };
+      yield { type: "usage", usage: { inputTokens: 1, outputTokens: 1 } };
+      yield { type: "done", finishReason: "stop" };
+    },
+  };
+
+  const events = [];
+  for await (const event of adapter.stream(request, {
+    requestId: "stream-1",
+    signal: new AbortController().signal,
+  })) {
+    events.push(event);
+  }
+
+  assert.deepEqual(events, [
+    { type: "delta", content: "hello" },
+    { type: "usage", usage: { inputTokens: 1, outputTokens: 1 } },
+    { type: "done", finishReason: "stop" },
+  ]);
+});

@@ -46,3 +46,29 @@ export interface ProviderAdapter {
   ): Promise<ProviderResponse>;
 }
 
+export interface StreamDeltaEvent {
+  readonly type: "delta";
+  readonly content: string;
+}
+
+export interface StreamUsageEvent {
+  readonly type: "usage";
+  readonly usage: TokenUsage;
+}
+
+export interface StreamDoneEvent {
+  readonly type: "done";
+  readonly finishReason: FinishReason;
+}
+
+export type ProviderStreamEvent =
+  | StreamDeltaEvent
+  | StreamUsageEvent
+  | StreamDoneEvent;
+
+export interface StreamingProviderAdapter extends ProviderAdapter {
+  stream(
+    request: GatewayRequest,
+    context: ProviderContext,
+  ): AsyncIterable<ProviderStreamEvent>;
+}

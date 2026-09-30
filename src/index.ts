@@ -16,6 +16,11 @@ export type {
   ProviderAdapter,
   ProviderContext,
   ProviderResponse,
+  ProviderStreamEvent,
+  StreamDeltaEvent,
+  StreamDoneEvent,
+  StreamingProviderAdapter,
+  StreamUsageEvent,
   TokenUsage,
 } from "./contracts.js";
 export {
