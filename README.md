@@ -50,8 +50,24 @@ console.log(response.provider, response.message.content);
 ```
 
 See the [architecture](docs/architecture.md) for policy order, failure semantics,
-and limitations. The [verification record](docs/verification.md) describes the
-locally measured test evidence; it makes no external-provider claims.
+and limitations. The [OpenAPI description](docs/openapi.yaml) specifies the HTTP
+boundary a host application can expose. Runnable [curl](examples/curl-client.sh)
+and [Node.js](examples/node-client.mjs) streaming clients target that boundary.
+The package deliberately does not start a server.
+
+## Streaming and validation
+
+`Gateway.stream()` emits provider-labelled `delta`, `usage`, and `done` events.
+`createSseResponse()` converts that async iterable into an unbuffered UTF-8 SSE
+response and closes the upstream iterator when the client disconnects. Fallback
+is allowed only before the first event, preventing two providers from being
+spliced into one answer.
+
+`parseStructuredOutput()` validates JSON against the documented schema subset:
+types, objects, required properties, additional-property policy, arrays, enums,
+string lengths, and numeric bounds. `ToolRegistry` applies the same validation
+to registered tool calls and rejects unknown tool names before execution. This
+is intentionally a focused subset, not a complete JSON Schema implementation.
 
 ## Current foundation
 
@@ -61,8 +77,11 @@ locally measured test evidence; it makes no external-provider claims.
 - Process-local token-bucket rate limiting.
 - Closed/open/half-open circuit breaking with a single recovery probe.
 - Chaos tests for outage, circuit recovery, and a provider that hangs.
+- Bounded streaming with caller cancellation and safe pre-output fallback.
+- SSE response encoding with deterministic event contracts.
+- Structured-output and registered tool-call validation.
 
-Streaming, structured output, observability, and real provider adapters remain
+Cost observability, routing benchmarks, and real provider adapters remain
 explicitly tracked in the [technical roadmap](docs/roadmap.md).
 
 ## License

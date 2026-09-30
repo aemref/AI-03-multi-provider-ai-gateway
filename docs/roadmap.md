@@ -14,9 +14,9 @@ intentionally outside this plan.
 
 ## 2. Streaming and structured output
 
-- [ ] Add SSE streaming and cancellation support.
-- [ ] Validate structured output and tool-calling schemas.
-- [ ] Publish OpenAPI documentation and sample clients.
+- [x] Add SSE streaming and cancellation support.
+- [x] Validate structured output and tool-calling schemas.
+- [x] Publish OpenAPI documentation and sample clients.
 
 ## 3. Cost and observability
 

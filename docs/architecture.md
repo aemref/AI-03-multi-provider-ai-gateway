@@ -2,10 +2,10 @@
 
 ## Scope
 
-The first release slice establishes local resilience primitives without calling
-real AI APIs. The gateway accepts one shared request schema, tries providers in
-declared order, and returns the first successful response in a shared response
-schema. Provider-specific SDKs, streaming, tool calls, cost accounting, and
+The current release slice establishes local resilience and streaming primitives
+without calling real AI APIs. The gateway accepts one shared request schema,
+tries providers in declared order, and returns either a complete shared response
+or provider-neutral stream events. Provider-specific SDKs, cost accounting, and
 tracing remain later roadmap work.
 
 ```mermaid
@@ -20,6 +20,9 @@ flowchart LR
     C2 --> P2[Provider adapter B]
     P1 --> S[Shared response]
     P2 --> S
+    P1 --> E[Delta / usage / done]
+    P2 --> E
+    E --> SSE[SSE response]
 ```
 
 ## Policy order
@@ -36,6 +39,9 @@ flowchart LR
    reset interval.
 5. After one provider exhausts its attempts, the gateway tries the next adapter.
    Caller cancellation and invalid input stop immediately instead of falling back.
+6. A streaming provider can fall back only before its first event. Once a delta
+   is visible, later failure is surfaced instead of appending another provider's
+   response. Each event wait has the same configured timeout bound.
 
 ## Failure taxonomy
 
@@ -62,6 +68,10 @@ policy independently testable and makes policy order visible at construction.
 Mocks implement the same public adapter contract as future real providers; the
 chaos suite does not use privileged test-only gateway hooks.
 
+Structured output is parsed before validation and failures are classified as
+non-retryable invalid provider responses. Tool definitions form a name allowlist;
+arguments must satisfy the associated schema before an execution boundary.
+
 ## Current limitations
 
 - The token bucket is process-local and is not a distributed quota system.
@@ -72,4 +82,7 @@ chaos suite does not use privileged test-only gateway hooks.
 - The circuit state is in memory and is reset when the process restarts.
 - No real provider credentials, service claims, or production benchmarks are
   included in this phase.
-
+- Schema validation implements a documented, dependency-free subset rather than
+  the complete JSON Schema specification.
+- The OpenAPI file describes a host application's HTTP boundary; this library
+  intentionally does not choose or start an HTTP framework.

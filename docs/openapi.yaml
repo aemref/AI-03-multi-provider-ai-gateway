@@ -1,0 +1,165 @@
+openapi: 3.1.0
+info:
+  title: Multi-Provider AI Gateway Boundary
+  version: 0.1.0
+  description: >-
+    HTTP boundary for a host application built with this library. The package
+    supplies gateway and SSE primitives; it does not start an HTTP server.
+servers:
+  - url: http://localhost:3000
+paths:
+  /v1/generate:
+    post:
+      operationId: generate
+      summary: Generate one complete provider response
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/GatewayRequest"
+      responses:
+        "200":
+          description: First successful provider response
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/GatewayResponse"
+        "400":
+          $ref: "#/components/responses/GatewayFailure"
+        "429":
+          $ref: "#/components/responses/GatewayFailure"
+        "503":
+          $ref: "#/components/responses/GatewayFailure"
+  /v1/stream:
+    post:
+      operationId: stream
+      summary: Stream provider-neutral delta, usage, and completion events
+      description: >-
+        Events use the delta, usage, and done names. Each data field is a JSON
+        GatewayStreamEvent and includes the selected provider name.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/GatewayRequest"
+      responses:
+        "200":
+          description: UTF-8 Server-Sent Events stream
+          headers:
+            Cache-Control:
+              schema:
+                type: string
+              example: no-cache, no-transform
+          content:
+            text/event-stream:
+              schema:
+                type: string
+              examples:
+                completion:
+                  value: |-
+                    event: delta
+                    data: {"type":"delta","content":"hello","provider":"mock-a"}
+
+                    event: done
+                    data: {"type":"done","finishReason":"stop","provider":"mock-a"}
+        "400":
+          $ref: "#/components/responses/GatewayFailure"
+        "429":
+          $ref: "#/components/responses/GatewayFailure"
+        "503":
+          $ref: "#/components/responses/GatewayFailure"
+components:
+  responses:
+    GatewayFailure:
+      description: Classified gateway failure
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/ErrorResponse"
+  schemas:
+    GatewayRequest:
+      type: object
+      additionalProperties: false
+      required: [model, messages]
+      properties:
+        model:
+          type: string
+          minLength: 1
+        messages:
+          type: array
+          minItems: 1
+          items:
+            $ref: "#/components/schemas/Message"
+        maxTokens:
+          type: integer
+          minimum: 1
+        temperature:
+          type: number
+          minimum: 0
+        metadata:
+          type: object
+          additionalProperties:
+            type: string
+    Message:
+      type: object
+      additionalProperties: false
+      required: [role, content]
+      properties:
+        role:
+          type: string
+          enum: [system, user, assistant, tool]
+        content:
+          type: string
+        name:
+          type: string
+    TokenUsage:
+      type: object
+      additionalProperties: false
+      required: [inputTokens, outputTokens]
+      properties:
+        inputTokens:
+          type: integer
+          minimum: 0
+        outputTokens:
+          type: integer
+          minimum: 0
+    GatewayResponse:
+      type: object
+      additionalProperties: false
+      required: [id, model, message, finishReason, usage, provider]
+      properties:
+        id:
+          type: string
+        model:
+          type: string
+        message:
+          $ref: "#/components/schemas/Message"
+        finishReason:
+          type: string
+          enum: [stop, length, tool_call]
+        usage:
+          $ref: "#/components/schemas/TokenUsage"
+        provider:
+          type: string
+    ErrorResponse:
+      type: object
+      additionalProperties: false
+      required: [kind, message]
+      properties:
+        kind:
+          type: string
+          enum:
+            - authentication
+            - rate_limited
+            - timeout
+            - unavailable
+            - invalid_request
+            - invalid_response
+            - aborted
+            - internal
+        message:
+          type: string
+        provider:
+          type: string
