@@ -51,6 +51,12 @@ export {
   type ValidationIssue,
   type ValidationResult,
 } from "./schema.js";
+export {
+  ToolRegistry,
+  type ToolCall,
+  type ToolDefinition,
+  type ValidatedToolCall,
+} from "./tools.js";
 export { Gateway, type GatewayOptions } from "./gateway.js";
 export {
   createEchoMockAdapter,
