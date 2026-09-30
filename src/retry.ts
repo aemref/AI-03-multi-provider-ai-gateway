@@ -35,6 +35,39 @@ function defaultSleep(milliseconds: number): Promise<void> {
   return new Promise((resolve) => setTimeout(resolve, milliseconds));
 }
 
+function abortedRequest(provider: string, cause?: unknown): GatewayError {
+  return new GatewayError("aborted", "Gateway request was aborted", {
+    ...(cause === undefined ? {} : { cause }),
+    provider,
+    retryable: false,
+  });
+}
+
+async function sleepUntilRetry(
+  milliseconds: number,
+  sleep: (milliseconds: number) => Promise<void>,
+  signal: AbortSignal | undefined,
+  provider: string,
+): Promise<void> {
+  if (signal?.aborted === true) {
+    throw abortedRequest(provider, signal.reason);
+  }
+
+  let abortListener: (() => void) | undefined;
+  const aborted = new Promise<never>((_resolve, reject) => {
+    abortListener = () => reject(abortedRequest(provider, signal?.reason));
+    signal?.addEventListener("abort", abortListener, { once: true });
+  });
+
+  try {
+    await Promise.race([sleep(milliseconds), aborted]);
+  } finally {
+    if (abortListener !== undefined) {
+      signal?.removeEventListener("abort", abortListener);
+    }
+  }
+}
+
 async function runAttempt(
   adapter: ProviderAdapter,
   request: GatewayRequest,
@@ -45,7 +78,14 @@ async function runAttempt(
   const controller = new AbortController();
   let timedOut = false;
   let timer: NodeJS.Timeout | undefined;
-  const abortFromUpstream = (): void => controller.abort(upstreamSignal?.reason);
+  let rejectForAbort: ((reason: GatewayError) => void) | undefined;
+  const aborted = new Promise<never>((_resolve, reject) => {
+    rejectForAbort = reject;
+  });
+  const abortFromUpstream = (): void => {
+    controller.abort(upstreamSignal?.reason);
+    rejectForAbort?.(abortedRequest(adapter.name, upstreamSignal?.reason));
+  };
 
   if (upstreamSignal?.aborted === true) {
     abortFromUpstream();
@@ -70,7 +110,11 @@ async function runAttempt(
   });
 
   try {
-    return await Promise.race([adapter.generate(request, providerContext), timeout]);
+    return await Promise.race([
+      adapter.generate(request, providerContext),
+      timeout,
+      aborted,
+    ]);
   } catch (error) {
     if (timedOut) {
       throw error;
@@ -99,6 +143,9 @@ export async function executeWithRetry(
   const sleep = options.sleep ?? defaultSleep;
 
   for (let attempt = 1; attempt <= options.maxAttempts; attempt += 1) {
+    if (options.signal?.aborted === true) {
+      throw abortedRequest(adapter.name, options.signal.reason);
+    }
     try {
       return await runAttempt(
         adapter,
@@ -114,7 +161,12 @@ export async function executeWithRetry(
       }
 
       const uncappedDelay = options.initialBackoffMs * 2 ** (attempt - 1);
-      await sleep(Math.min(uncappedDelay, options.maxBackoffMs));
+      await sleepUntilRetry(
+        Math.min(uncappedDelay, options.maxBackoffMs),
+        sleep,
+        options.signal,
+        adapter.name,
+      );
     }
   }
 
@@ -122,4 +174,3 @@ export async function executeWithRetry(
     provider: adapter.name,
   });
 }
-

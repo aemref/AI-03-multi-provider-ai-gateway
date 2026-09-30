@@ -92,6 +92,63 @@ test("times out even when a provider ignores cancellation", async () => {
   );
 });
 
+test("rejects immediately when the caller signal is already aborted", async () => {
+  let called = false;
+  const controller = new AbortController();
+  controller.abort(new Error("caller left"));
+  const adapter: ProviderAdapter = {
+    name: "unused",
+    async generate() {
+      called = true;
+      return await new Promise(() => undefined);
+    },
+  };
+
+  await assert.rejects(
+    executeWithRetry(adapter, request, {
+      requestId: "request-aborted",
+      timeoutMs: 1_000,
+      maxAttempts: 1,
+      initialBackoffMs: 0,
+      maxBackoffMs: 0,
+      signal: controller.signal,
+    }),
+    (error: unknown) =>
+      error instanceof GatewayError &&
+      error.kind === "aborted" &&
+      error.provider === "unused",
+  );
+  assert.equal(called, false);
+});
+
+test("caller cancellation interrupts retry backoff", async () => {
+  const controller = new AbortController();
+  let calls = 0;
+  const adapter: ProviderAdapter = {
+    name: "flaky",
+    async generate() {
+      calls += 1;
+      throw new GatewayError("unavailable", "retry me");
+    },
+  };
+
+  const pending = executeWithRetry(adapter, request, {
+    requestId: "request-backoff",
+    timeoutMs: 100,
+    maxAttempts: 3,
+    initialBackoffMs: 10_000,
+    maxBackoffMs: 10_000,
+    signal: controller.signal,
+  });
+  controller.abort(new Error("caller left"));
+
+  await assert.rejects(
+    pending,
+    (error: unknown) => error instanceof GatewayError && error.kind === "aborted",
+  );
+  assert.equal(calls, 1);
+});
+
 test("rejects invalid retry configuration before calling a provider", async () => {
   let called = false;
   const adapter: ProviderAdapter = {
@@ -114,4 +171,3 @@ test("rejects invalid retry configuration before calling a provider", async () =
   );
   assert.equal(called, false);
 });
-
