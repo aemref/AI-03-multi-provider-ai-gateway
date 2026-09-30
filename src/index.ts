@@ -12,6 +12,7 @@ export type {
   GatewayMessage,
   GatewayRequest,
   GatewayResponse,
+  GatewayStreamEvent,
   MessageRole,
   ProviderAdapter,
   ProviderContext,
@@ -30,6 +31,11 @@ export {
   type GatewayErrorOptions,
 } from "./errors.js";
 export { executeWithRetry, type RetryOptions } from "./retry.js";
+export {
+  streamFromProvider,
+  supportsStreaming,
+  type ProviderStreamOptions,
+} from "./stream.js";
 export { Gateway, type GatewayOptions } from "./gateway.js";
 export {
   createEchoMockAdapter,

@@ -3,11 +3,13 @@ import { randomUUID } from "node:crypto";
 import type {
   GatewayRequest,
   GatewayResponse,
+  GatewayStreamEvent,
   ProviderAdapter,
 } from "./contracts.js";
 import { GatewayError, normalizeProviderError } from "./errors.js";
 import type { RateLimiter } from "./rate-limiter.js";
 import { executeWithRetry } from "./retry.js";
+import { streamFromProvider, supportsStreaming } from "./stream.js";
 
 export interface GatewayOptions {
   readonly timeoutMs?: number;
@@ -90,6 +92,56 @@ export class Gateway {
     throw new GatewayError(
       "unavailable",
       `All providers failed: ${failures.map((failure) => failure.provider).join(", ")}`,
+      { cause: new AggregateError(failures), retryable: true },
+    );
+  }
+
+  async *stream(
+    request: GatewayRequest,
+    signal?: AbortSignal,
+  ): AsyncIterable<GatewayStreamEvent> {
+    this.#options.rateLimiter?.acquire();
+    const requestId = this.#options.createRequestId();
+    const failures: GatewayError[] = [];
+    let foundStreamingAdapter = false;
+
+    for (const adapter of this.#adapters) {
+      if (!supportsStreaming(adapter)) {
+        continue;
+      }
+      foundStreamingAdapter = true;
+      let emitted = false;
+
+      try {
+        for await (const event of streamFromProvider(adapter, request, {
+          requestId,
+          timeoutMs: this.#options.timeoutMs,
+          ...(signal === undefined ? {} : { signal }),
+        })) {
+          emitted = true;
+          yield { ...event, provider: adapter.name };
+        }
+        return;
+      } catch (error) {
+        const failure = normalizeProviderError(adapter.name, error);
+        if (emitted || failure.kind === "aborted" || failure.kind === "invalid_request") {
+          throw failure;
+        }
+        failures.push(failure);
+      }
+    }
+
+    if (!foundStreamingAdapter) {
+      throw new GatewayError(
+        "invalid_request",
+        "At least one provider must support streaming",
+      );
+    }
+    throw new GatewayError(
+      "unavailable",
+      `All streaming providers failed: ${failures
+        .map((failure) => failure.provider)
+        .join(", ")}`,
       { cause: new AggregateError(failures), retryable: true },
     );
   }

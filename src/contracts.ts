@@ -66,6 +66,10 @@ export type ProviderStreamEvent =
   | StreamUsageEvent
   | StreamDoneEvent;
 
+export type GatewayStreamEvent = ProviderStreamEvent & {
+  readonly provider: string;
+};
+
 export interface StreamingProviderAdapter extends ProviderAdapter {
   stream(
     request: GatewayRequest,
