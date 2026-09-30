@@ -36,6 +36,11 @@ export {
   supportsStreaming,
   type ProviderStreamOptions,
 } from "./stream.js";
+export {
+  createSseResponse,
+  encodeServerSentEvent,
+  SSE_HEADERS,
+} from "./sse.js";
 export { Gateway, type GatewayOptions } from "./gateway.js";
 export {
   createEchoMockAdapter,
