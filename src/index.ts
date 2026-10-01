@@ -48,7 +48,11 @@ export {
   type RequestStartedTrace,
   type TraceSink,
 } from "./observability.js";
-export { executeWithRetry, type RetryOptions } from "./retry.js";
+export {
+  executeWithRetry,
+  type RetryAttemptEvent,
+  type RetryOptions,
+} from "./retry.js";
 export {
   streamFromProvider,
   supportsStreaming,

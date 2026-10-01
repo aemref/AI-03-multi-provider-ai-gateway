@@ -3,7 +3,10 @@ import test from "node:test";
 
 import type { GatewayRequest, ProviderAdapter } from "../src/contracts.js";
 import { GatewayError } from "../src/errors.js";
-import { executeWithRetry } from "../src/retry.js";
+import {
+  executeWithRetry,
+  type RetryAttemptEvent,
+} from "../src/retry.js";
 
 const request: GatewayRequest = {
   model: "mock-small",
@@ -67,6 +70,96 @@ test("does not retry permanent failures", async () => {
     (error: unknown) => error instanceof GatewayError && error.kind === "authentication",
   );
   assert.equal(calls, 1);
+});
+
+test("reports deterministic attempt timing without changing retry behavior", async () => {
+  const events: RetryAttemptEvent[] = [];
+  const times = [100, 105, 110, 119];
+  let calls = 0;
+  const adapter: ProviderAdapter = {
+    name: "observed",
+    async generate() {
+      calls += 1;
+      if (calls === 1) {
+        throw new GatewayError("unavailable", "retry once");
+      }
+      return {
+        id: "response-observed",
+        model: request.model,
+        message: { role: "assistant", content: "ok" },
+        finishReason: "stop",
+        usage: { inputTokens: 1, outputTokens: 1 },
+      };
+    },
+  };
+
+  await executeWithRetry(adapter, request, {
+    requestId: "request-observed",
+    timeoutMs: 100,
+    maxAttempts: 2,
+    initialBackoffMs: 0,
+    maxBackoffMs: 0,
+    sleep: async () => undefined,
+    now: () => times.shift() ?? 119,
+    onAttempt: (event) => events.push(event),
+  });
+
+  assert.deepEqual(
+    events.map((event) => ({
+      type: event.type,
+      attempt: event.attempt,
+      timestampMs: event.timestampMs,
+      ...(event.type === "started" ? {} : { durationMs: event.durationMs }),
+      ...(event.type === "failed"
+        ? { failureKind: event.failure.kind }
+        : {}),
+    })),
+    [
+      { type: "started", attempt: 1, timestampMs: 100 },
+      {
+        type: "failed",
+        attempt: 1,
+        timestampMs: 105,
+        durationMs: 5,
+        failureKind: "unavailable",
+      },
+      { type: "started", attempt: 2, timestampMs: 110 },
+      {
+        type: "succeeded",
+        attempt: 2,
+        timestampMs: 119,
+        durationMs: 9,
+      },
+    ],
+  );
+});
+
+test("ignores failures raised by an attempt observer", async () => {
+  const adapter: ProviderAdapter = {
+    name: "healthy",
+    async generate() {
+      return {
+        id: "response-healthy",
+        model: request.model,
+        message: { role: "assistant", content: "ok" },
+        finishReason: "stop",
+        usage: { inputTokens: 1, outputTokens: 1 },
+      };
+    },
+  };
+
+  const response = await executeWithRetry(adapter, request, {
+    requestId: "request-observer-failure",
+    timeoutMs: 100,
+    maxAttempts: 1,
+    initialBackoffMs: 0,
+    maxBackoffMs: 0,
+    onAttempt: () => {
+      throw new Error("observer unavailable");
+    },
+  });
+
+  assert.equal(response.id, "response-healthy");
 });
 
 test("times out even when a provider ignores cancellation", async () => {

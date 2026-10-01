@@ -14,7 +14,32 @@ export interface RetryOptions {
   readonly maxBackoffMs: number;
   readonly signal?: AbortSignal;
   readonly sleep?: (milliseconds: number) => Promise<void>;
+  readonly now?: () => number;
+  readonly onAttempt?: (event: RetryAttemptEvent) => void;
 }
+
+export type RetryAttemptEvent =
+  | {
+      readonly type: "started";
+      readonly provider: string;
+      readonly attempt: number;
+      readonly timestampMs: number;
+    }
+  | {
+      readonly type: "succeeded";
+      readonly provider: string;
+      readonly attempt: number;
+      readonly timestampMs: number;
+      readonly durationMs: number;
+    }
+  | {
+      readonly type: "failed";
+      readonly provider: string;
+      readonly attempt: number;
+      readonly timestampMs: number;
+      readonly durationMs: number;
+      readonly failure: GatewayError;
+    };
 
 function validateOptions(options: RetryOptions): void {
   if (!Number.isInteger(options.maxAttempts) || options.maxAttempts < 1) {
@@ -33,6 +58,17 @@ function validateOptions(options: RetryOptions): void {
 
 function defaultSleep(milliseconds: number): Promise<void> {
   return new Promise((resolve) => setTimeout(resolve, milliseconds));
+}
+
+function notifyAttempt(
+  callback: RetryOptions["onAttempt"],
+  event: RetryAttemptEvent,
+): void {
+  try {
+    callback?.(event);
+  } catch {
+    // Attempt observers are best-effort and cannot alter retry behavior.
+  }
 }
 
 function abortedRequest(provider: string, cause?: unknown): GatewayError {
@@ -141,21 +177,47 @@ export async function executeWithRetry(
 ): Promise<ProviderResponse> {
   validateOptions(options);
   const sleep = options.sleep ?? defaultSleep;
+  const now = options.now ?? Date.now;
 
   for (let attempt = 1; attempt <= options.maxAttempts; attempt += 1) {
     if (options.signal?.aborted === true) {
       throw abortedRequest(adapter.name, options.signal.reason);
     }
+    const startedAt = now();
+    notifyAttempt(options.onAttempt, {
+      type: "started",
+      provider: adapter.name,
+      attempt,
+      timestampMs: startedAt,
+    });
     try {
-      return await runAttempt(
+      const response = await runAttempt(
         adapter,
         request,
         { requestId: options.requestId, signal: options.signal ?? new AbortController().signal },
         options.timeoutMs,
         options.signal,
       );
+      const finishedAt = now();
+      notifyAttempt(options.onAttempt, {
+        type: "succeeded",
+        provider: adapter.name,
+        attempt,
+        timestampMs: finishedAt,
+        durationMs: Math.max(0, finishedAt - startedAt),
+      });
+      return response;
     } catch (error) {
       const failure = normalizeProviderError(adapter.name, error);
+      const finishedAt = now();
+      notifyAttempt(options.onAttempt, {
+        type: "failed",
+        provider: adapter.name,
+        attempt,
+        timestampMs: finishedAt,
+        durationMs: Math.max(0, finishedAt - startedAt),
+        failure,
+      });
       if (!failure.retryable || attempt === options.maxAttempts) {
         throw failure;
       }
