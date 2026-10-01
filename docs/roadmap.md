@@ -20,7 +20,8 @@ intentionally outside this plan.
 
 ## 3. Cost and observability
 
-- [ ] Track tokens, cost, latency, request IDs, and traces.
+- [x] Track tokens, cost, latency, request IDs, and content-safe traces.
+- [ ] Aggregate trace events into a local cost dashboard.
 - [ ] Benchmark caching and model-routing strategies.
 - [ ] Apply secret-management and input-limit security checks.
 

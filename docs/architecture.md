@@ -5,8 +5,8 @@
 The current release slice establishes local resilience and streaming primitives
 without calling real AI APIs. The gateway accepts one shared request schema,
 tries providers in declared order, and returns either a complete shared response
-or provider-neutral stream events. Provider-specific SDKs, cost accounting, and
-tracing remain later roadmap work.
+or provider-neutral stream events. Provider-specific SDKs and external telemetry
+backends remain later roadmap work.
 
 ```mermaid
 flowchart LR
@@ -23,6 +23,8 @@ flowchart LR
     P1 --> E[Delta / usage / done]
     P2 --> E
     E --> SSE[SSE response]
+    G --> T[Content-safe trace sink]
+    T --> O[Latency / tokens / estimated cost]
 ```
 
 ## Policy order
@@ -72,6 +74,12 @@ Structured output is parsed before validation and failures are classified as
 non-retryable invalid provider responses. Tool definitions form a name allowlist;
 arguments must satisfy the associated schema before an execution boundary.
 
+Request IDs are returned to callers and propagated to providers and trace
+events. The gateway records per-attempt and end-to-end latency, normalized
+failures, token usage, and optional host-configured cost estimates. Trace events
+exclude message content, output content, metadata, error text, and causes. A
+trace-sink failure is contained and cannot change the serving result.
+
 ## Current limitations
 
 - The token bucket is process-local and is not a distributed quota system.
@@ -86,3 +94,7 @@ arguments must satisfy the associated schema before an execution boundary.
   the complete JSON Schema specification.
 - The OpenAPI file describes a host application's HTTP boundary; this library
   intentionally does not choose or start an HTTP framework.
+- Cost values are estimates based on host-supplied prices and provider-reported
+  tokens; they are not billing records.
+- The included in-memory trace sink has no persistence or aggregation and is not
+  a production metrics backend.
