@@ -6,9 +6,11 @@ import type {
   GatewayStreamEvent,
   ProviderAdapter,
 } from "./contracts.js";
+import type { PricingCatalog } from "./cost.js";
 import { GatewayError, normalizeProviderError } from "./errors.js";
+import { recordTrace, type TraceSink } from "./observability.js";
 import type { RateLimiter } from "./rate-limiter.js";
-import { executeWithRetry } from "./retry.js";
+import { executeWithRetry, type RetryAttemptEvent } from "./retry.js";
 import { streamFromProvider, supportsStreaming } from "./stream.js";
 
 export interface GatewayOptions {
@@ -19,6 +21,9 @@ export interface GatewayOptions {
   readonly sleep?: (milliseconds: number) => Promise<void>;
   readonly createRequestId?: () => string;
   readonly rateLimiter?: RateLimiter;
+  readonly now?: () => number;
+  readonly traceSink?: TraceSink;
+  readonly pricingCatalog?: PricingCatalog;
 }
 
 const DEFAULT_OPTIONS = {
@@ -31,9 +36,15 @@ const DEFAULT_OPTIONS = {
 export class Gateway {
   readonly #adapters: readonly ProviderAdapter[];
   readonly #options: Required<
-    Omit<GatewayOptions, "sleep" | "rateLimiter">
+    Omit<
+      GatewayOptions,
+      "sleep" | "rateLimiter" | "traceSink" | "pricingCatalog"
+    >
   > &
-    Pick<GatewayOptions, "sleep" | "rateLimiter">;
+    Pick<
+      GatewayOptions,
+      "sleep" | "rateLimiter" | "traceSink" | "pricingCatalog"
+    >;
 
   constructor(adapters: readonly ProviderAdapter[], options: GatewayOptions = {}) {
     if (adapters.length === 0) {
@@ -53,10 +64,17 @@ export class Gateway {
         options.initialBackoffMs ?? DEFAULT_OPTIONS.initialBackoffMs,
       maxBackoffMs: options.maxBackoffMs ?? DEFAULT_OPTIONS.maxBackoffMs,
       createRequestId: options.createRequestId ?? randomUUID,
+      now: options.now ?? Date.now,
       ...(options.sleep === undefined ? {} : { sleep: options.sleep }),
       ...(options.rateLimiter === undefined
         ? {}
         : { rateLimiter: options.rateLimiter }),
+      ...(options.traceSink === undefined
+        ? {}
+        : { traceSink: options.traceSink }),
+      ...(options.pricingCatalog === undefined
+        ? {}
+        : { pricingCatalog: options.pricingCatalog }),
     };
   }
 
@@ -66,6 +84,17 @@ export class Gateway {
   ): Promise<GatewayResponse> {
     this.#options.rateLimiter?.acquire();
     const requestId = this.#options.createRequestId();
+    const startedAt = this.#options.now();
+    const traceBase = {
+      requestId,
+      operation: "generate" as const,
+      model: request.model,
+    };
+    recordTrace(this.#options.traceSink, {
+      ...traceBase,
+      type: "request.started",
+      timestampMs: startedAt,
+    });
     const failures: GatewayError[] = [];
 
     for (const adapter of this.#adapters) {
@@ -78,22 +107,44 @@ export class Gateway {
           maxBackoffMs: this.#options.maxBackoffMs,
           ...(signal === undefined ? {} : { signal }),
           ...(this.#options.sleep === undefined ? {} : { sleep: this.#options.sleep }),
+          now: this.#options.now,
+          onAttempt: (event) => {
+            this.#recordAttemptTrace(traceBase, event);
+          },
+        });
+        const finishedAt = this.#options.now();
+        const cost = this.#options.pricingCatalog?.estimate(
+          adapter.name,
+          response.model,
+          response.usage,
+        );
+        recordTrace(this.#options.traceSink, {
+          ...traceBase,
+          type: "request.completed",
+          timestampMs: finishedAt,
+          provider: adapter.name,
+          durationMs: Math.max(0, finishedAt - startedAt),
+          usage: response.usage,
+          ...(cost === undefined ? {} : { cost }),
         });
         return { ...response, provider: adapter.name, requestId };
       } catch (error) {
         const failure = normalizeProviderError(adapter.name, error);
         if (failure.kind === "aborted" || failure.kind === "invalid_request") {
+          this.#recordRequestFailure(traceBase, startedAt, failure);
           throw failure;
         }
         failures.push(failure);
       }
     }
 
-    throw new GatewayError(
+    const failure = new GatewayError(
       "unavailable",
       `All providers failed: ${failures.map((failure) => failure.provider).join(", ")}`,
       { cause: new AggregateError(failures), retryable: true },
     );
+    this.#recordRequestFailure(traceBase, startedAt, failure);
+    throw failure;
   }
 
   async *stream(
@@ -144,5 +195,68 @@ export class Gateway {
         .join(", ")}`,
       { cause: new AggregateError(failures), retryable: true },
     );
+  }
+
+  #recordAttemptTrace(
+    traceBase: {
+      readonly requestId: string;
+      readonly operation: "generate";
+      readonly model: string;
+    },
+    event: RetryAttemptEvent,
+  ): void {
+    if (event.type === "started") {
+      recordTrace(this.#options.traceSink, {
+        ...traceBase,
+        type: "provider.attempt.started",
+        timestampMs: event.timestampMs,
+        provider: event.provider,
+        attempt: event.attempt,
+      });
+      return;
+    }
+
+    if (event.type === "succeeded") {
+      recordTrace(this.#options.traceSink, {
+        ...traceBase,
+        type: "provider.attempt.succeeded",
+        timestampMs: event.timestampMs,
+        provider: event.provider,
+        attempt: event.attempt,
+        durationMs: event.durationMs,
+      });
+      return;
+    }
+
+    recordTrace(this.#options.traceSink, {
+      ...traceBase,
+      type: "provider.attempt.failed",
+      timestampMs: event.timestampMs,
+      provider: event.provider,
+      attempt: event.attempt,
+      durationMs: event.durationMs,
+      failureKind: event.failure.kind,
+      retryable: event.failure.retryable,
+    });
+  }
+
+  #recordRequestFailure(
+    traceBase: {
+      readonly requestId: string;
+      readonly operation: "generate";
+      readonly model: string;
+    },
+    startedAt: number,
+    failure: GatewayError,
+  ): void {
+    const finishedAt = this.#options.now();
+    recordTrace(this.#options.traceSink, {
+      ...traceBase,
+      type: "request.failed",
+      timestampMs: finishedAt,
+      durationMs: Math.max(0, finishedAt - startedAt),
+      failureKind: failure.kind,
+      ...(failure.provider === undefined ? {} : { provider: failure.provider }),
+    });
   }
 }

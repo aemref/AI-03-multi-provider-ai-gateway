@@ -53,6 +53,10 @@ function validateUsage(usage: TokenUsage): void {
   }
 }
 
+function roundUsd(value: number): number {
+  return Math.round(value * 1_000_000_000_000) / 1_000_000_000_000;
+}
+
 export class PricingCatalog {
   readonly #pricing = new Map<string, ModelPricing>();
 
@@ -81,15 +85,17 @@ export class PricingCatalog {
       return undefined;
     }
 
-    const inputUsd =
-      (usage.inputTokens * pricing.inputUsdPerMillionTokens) / 1_000_000;
-    const outputUsd =
-      (usage.outputTokens * pricing.outputUsdPerMillionTokens) / 1_000_000;
+    const inputUsd = roundUsd(
+      (usage.inputTokens * pricing.inputUsdPerMillionTokens) / 1_000_000,
+    );
+    const outputUsd = roundUsd(
+      (usage.outputTokens * pricing.outputUsdPerMillionTokens) / 1_000_000,
+    );
     return {
       currency: "USD",
       inputUsd,
       outputUsd,
-      totalUsd: inputUsd + outputUsd,
+      totalUsd: roundUsd(inputUsd + outputUsd),
     };
   }
 }
