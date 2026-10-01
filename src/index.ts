@@ -35,6 +35,19 @@ export {
   type FailureKind,
   type GatewayErrorOptions,
 } from "./errors.js";
+export {
+  InMemoryTraceSink,
+  recordTrace,
+  type GatewayOperation,
+  type GatewayTraceEvent,
+  type ProviderAttemptFailedTrace,
+  type ProviderAttemptStartedTrace,
+  type ProviderAttemptSucceededTrace,
+  type RequestCompletedTrace,
+  type RequestFailedTrace,
+  type RequestStartedTrace,
+  type TraceSink,
+} from "./observability.js";
 export { executeWithRetry, type RetryOptions } from "./retry.js";
 export {
   streamFromProvider,
