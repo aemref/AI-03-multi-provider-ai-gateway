@@ -8,8 +8,10 @@ import type {
   ProviderStreamEvent,
   StreamingProviderAdapter,
 } from "../src/contracts.js";
+import { PricingCatalog } from "../src/cost.js";
 import { GatewayError } from "../src/errors.js";
 import { Gateway } from "../src/gateway.js";
+import { InMemoryTraceSink } from "../src/observability.js";
 
 const request: GatewayRequest = {
   model: "mock-small",
@@ -143,4 +145,85 @@ test("cancels a provider that is waiting for its first event", async () => {
     (error: unknown) => error instanceof GatewayError && error.kind === "aborted",
   );
   assert.equal(providerObservedAbort, true);
+});
+
+test("records stream latency, usage, and estimated cost", async () => {
+  const traceSink = new InMemoryTraceSink();
+  const times = [100, 101, 110];
+  const adapter = streamingAdapter("primary", async function* () {
+    yield { type: "delta", content: "hello" };
+    yield {
+      type: "usage",
+      usage: { inputTokens: 10, outputTokens: 5 },
+    };
+    yield { type: "done", finishReason: "stop" };
+  });
+  const gateway = new Gateway([adapter], {
+    createRequestId: () => "stream-observed",
+    now: () => times.shift() ?? 110,
+    traceSink,
+    pricingCatalog: new PricingCatalog([
+      {
+        provider: "primary",
+        model: "mock-small",
+        inputUsdPerMillionTokens: 2,
+        outputUsdPerMillionTokens: 4,
+      },
+    ]),
+  });
+
+  for await (const _event of gateway.stream(request)) {
+    // Consume the complete stream so completion telemetry is recorded.
+  }
+
+  assert.deepEqual(traceSink.snapshot().at(-1), {
+    type: "request.completed",
+    timestampMs: 110,
+    requestId: "stream-observed",
+    operation: "stream",
+    model: "mock-small",
+    provider: "primary",
+    durationMs: 10,
+    usage: { inputTokens: 10, outputTokens: 5 },
+    cost: {
+      currency: "USD",
+      inputUsd: 0.00002,
+      outputUsd: 0.00002,
+      totalUsd: 0.00004,
+    },
+  });
+});
+
+test("records caller cancellation as a failed stream request", async () => {
+  const traceSink = new InMemoryTraceSink();
+  const controller = new AbortController();
+  const adapter = streamingAdapter("slow", async function* (context) {
+    await new Promise<void>((resolve) => {
+      context.signal.addEventListener("abort", () => resolve(), { once: true });
+    });
+  });
+  const gateway = new Gateway([adapter], {
+    createRequestId: () => "stream-cancelled",
+    now: () => 25,
+    traceSink,
+  });
+  const pending = (async () => {
+    for await (const _event of gateway.stream(request, controller.signal)) {
+      // The caller cancels while waiting for the first event.
+    }
+  })();
+
+  controller.abort(new Error("caller left"));
+  await assert.rejects(pending, GatewayError);
+
+  assert.deepEqual(traceSink.snapshot().at(-1), {
+    type: "request.failed",
+    timestampMs: 25,
+    requestId: "stream-cancelled",
+    operation: "stream",
+    model: "mock-small",
+    durationMs: 0,
+    failureKind: "aborted",
+    provider: "slow",
+  });
 });

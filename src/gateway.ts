@@ -5,6 +5,7 @@ import type {
   GatewayResponse,
   GatewayStreamEvent,
   ProviderAdapter,
+  TokenUsage,
 } from "./contracts.js";
 import type { PricingCatalog } from "./cost.js";
 import { GatewayError, normalizeProviderError } from "./errors.js";
@@ -153,6 +154,17 @@ export class Gateway {
   ): AsyncIterable<GatewayStreamEvent> {
     this.#options.rateLimiter?.acquire();
     const requestId = this.#options.createRequestId();
+    const startedAt = this.#options.now();
+    const traceBase = {
+      requestId,
+      operation: "stream" as const,
+      model: request.model,
+    };
+    recordTrace(this.#options.traceSink, {
+      ...traceBase,
+      type: "request.started",
+      timestampMs: startedAt,
+    });
     const failures: GatewayError[] = [];
     let foundStreamingAdapter = false;
 
@@ -162,6 +174,15 @@ export class Gateway {
       }
       foundStreamingAdapter = true;
       let emitted = false;
+      let usage: TokenUsage | undefined;
+      const attemptStartedAt = this.#options.now();
+      recordTrace(this.#options.traceSink, {
+        ...traceBase,
+        type: "provider.attempt.started",
+        timestampMs: attemptStartedAt,
+        provider: adapter.name,
+        attempt: 1,
+      });
 
       try {
         for await (const event of streamFromProvider(adapter, request, {
@@ -170,12 +191,53 @@ export class Gateway {
           ...(signal === undefined ? {} : { signal }),
         })) {
           emitted = true;
+          if (event.type === "usage") {
+            usage = event.usage;
+          }
           yield { ...event, provider: adapter.name, requestId };
         }
+        const finishedAt = this.#options.now();
+        const cost =
+          usage === undefined
+            ? undefined
+            : this.#options.pricingCatalog?.estimate(
+                adapter.name,
+                request.model,
+                usage,
+              );
+        recordTrace(this.#options.traceSink, {
+          ...traceBase,
+          type: "provider.attempt.succeeded",
+          timestampMs: finishedAt,
+          provider: adapter.name,
+          attempt: 1,
+          durationMs: Math.max(0, finishedAt - attemptStartedAt),
+        });
+        recordTrace(this.#options.traceSink, {
+          ...traceBase,
+          type: "request.completed",
+          timestampMs: finishedAt,
+          provider: adapter.name,
+          durationMs: Math.max(0, finishedAt - startedAt),
+          ...(usage === undefined ? {} : { usage }),
+          ...(cost === undefined ? {} : { cost }),
+        });
         return;
       } catch (error) {
         const failure = normalizeProviderError(adapter.name, error);
+        const finishedAt = this.#options.now();
+        recordTrace(this.#options.traceSink, {
+          ...traceBase,
+          type: "provider.attempt.failed",
+          timestampMs: finishedAt,
+          provider: adapter.name,
+          attempt: 1,
+          durationMs: Math.max(0, finishedAt - attemptStartedAt),
+          failureKind: failure.kind,
+          retryable: failure.retryable,
+        });
         if (emitted || failure.kind === "aborted" || failure.kind === "invalid_request") {
+          this.#recordRequestFailure(traceBase, startedAt, failure);
           throw failure;
         }
         failures.push(failure);
@@ -183,24 +245,28 @@ export class Gateway {
     }
 
     if (!foundStreamingAdapter) {
-      throw new GatewayError(
+      const failure = new GatewayError(
         "invalid_request",
         "At least one provider must support streaming",
       );
+      this.#recordRequestFailure(traceBase, startedAt, failure);
+      throw failure;
     }
-    throw new GatewayError(
+    const failure = new GatewayError(
       "unavailable",
       `All streaming providers failed: ${failures
         .map((failure) => failure.provider)
         .join(", ")}`,
       { cause: new AggregateError(failures), retryable: true },
     );
+    this.#recordRequestFailure(traceBase, startedAt, failure);
+    throw failure;
   }
 
   #recordAttemptTrace(
     traceBase: {
       readonly requestId: string;
-      readonly operation: "generate";
+      readonly operation: "generate" | "stream";
       readonly model: string;
     },
     event: RetryAttemptEvent,
@@ -243,7 +309,7 @@ export class Gateway {
   #recordRequestFailure(
     traceBase: {
       readonly requestId: string;
-      readonly operation: "generate";
+      readonly operation: "generate" | "stream";
       readonly model: string;
     },
     startedAt: number,
