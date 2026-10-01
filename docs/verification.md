@@ -3,7 +3,8 @@
 Observed locally on 2026-10-01 with Node.js `v25.2.1` and npm `11.6.2`:
 
 ```text
-npm ci -> 3 packages installed, 0 audit findings
+npm ci -> 3 packages installed from the lockfile
+npm audit --audit-level=high -> 0 vulnerabilities
 npm run verify -> typecheck, build, 51 passed, 0 failed
 npm run demo:observability -> request, usage, latency, cost, and trace emitted
 npm run pack:check -> 53 files, 26.7 kB tarball
