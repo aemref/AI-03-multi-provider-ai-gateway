@@ -31,6 +31,7 @@ export interface ProviderResponse {
 
 export interface GatewayResponse extends ProviderResponse {
   readonly provider: string;
+  readonly requestId: string;
 }
 
 export interface ProviderContext {
@@ -68,6 +69,7 @@ export type ProviderStreamEvent =
 
 export type GatewayStreamEvent = ProviderStreamEvent & {
   readonly provider: string;
+  readonly requestId: string;
 };
 
 export interface StreamingProviderAdapter extends ProviderAdapter {

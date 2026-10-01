@@ -13,6 +13,7 @@ test("encodes one JSON payload per SSE frame", () => {
     type: "delta",
     content: "hello\nworld 👋",
     provider: "mock-a",
+    requestId: "request-1",
   };
 
   assert.equal(
@@ -23,13 +24,24 @@ test("encodes one JSON payload per SSE frame", () => {
 
 test("creates an unbuffered UTF-8 event-stream response", async () => {
   async function* events(): AsyncIterable<GatewayStreamEvent> {
-    yield { type: "delta", content: "merhaba", provider: "mock-a" };
+    yield {
+      type: "delta",
+      content: "merhaba",
+      provider: "mock-a",
+      requestId: "request-1",
+    };
     yield {
       type: "usage",
       usage: { inputTokens: 2, outputTokens: 1 },
       provider: "mock-a",
+      requestId: "request-1",
     };
-    yield { type: "done", finishReason: "stop", provider: "mock-a" };
+    yield {
+      type: "done",
+      finishReason: "stop",
+      provider: "mock-a",
+      requestId: "request-1",
+    };
   }
 
   const response = createSseResponse(events());
@@ -41,9 +53,9 @@ test("creates an unbuffered UTF-8 event-stream response", async () => {
   assert.equal(
     await response.text(),
     [
-      'event: delta\ndata: {"type":"delta","content":"merhaba","provider":"mock-a"}\n\n',
-      'event: usage\ndata: {"type":"usage","usage":{"inputTokens":2,"outputTokens":1},"provider":"mock-a"}\n\n',
-      'event: done\ndata: {"type":"done","finishReason":"stop","provider":"mock-a"}\n\n',
+      'event: delta\ndata: {"type":"delta","content":"merhaba","provider":"mock-a","requestId":"request-1"}\n\n',
+      'event: usage\ndata: {"type":"usage","usage":{"inputTokens":2,"outputTokens":1},"provider":"mock-a","requestId":"request-1"}\n\n',
+      'event: done\ndata: {"type":"done","finishReason":"stop","provider":"mock-a","requestId":"request-1"}\n\n',
     ].join(""),
   );
 });
@@ -52,7 +64,12 @@ test("cancelling the response closes the upstream iterator", async () => {
   let closed = false;
   async function* events(): AsyncIterable<GatewayStreamEvent> {
     try {
-      yield { type: "delta", content: "first", provider: "mock-a" };
+      yield {
+        type: "delta",
+        content: "first",
+        provider: "mock-a",
+        requestId: "request-1",
+      };
       await new Promise(() => undefined);
     } finally {
       closed = true;

@@ -32,6 +32,7 @@ test("returns the first provider response without calling fallback", async () =>
   const result = await gateway.generate(request);
 
   assert.equal(result.provider, "primary");
+  assert.equal(result.requestId, "request-1");
   assert.equal(primary.calls.length, 1);
   assert.equal(primary.calls[0]?.requestId, "request-1");
   assert.equal(secondary.calls.length, 0);
@@ -82,4 +83,3 @@ test("requires unique named providers", () => {
     (error: unknown) => error instanceof GatewayError && error.kind === "invalid_request",
   );
 });
-

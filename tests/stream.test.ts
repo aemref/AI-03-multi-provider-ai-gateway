@@ -50,9 +50,24 @@ test("streams provider events with provider identity", async () => {
   }
 
   assert.deepEqual(events, [
-    { type: "delta", content: "hel", provider: "primary" },
-    { type: "delta", content: "lo", provider: "primary" },
-    { type: "done", finishReason: "stop", provider: "primary" },
+    {
+      type: "delta",
+      content: "hel",
+      provider: "primary",
+      requestId: "stream-1",
+    },
+    {
+      type: "delta",
+      content: "lo",
+      provider: "primary",
+      requestId: "stream-1",
+    },
+    {
+      type: "done",
+      finishReason: "stop",
+      provider: "primary",
+      requestId: "stream-1",
+    },
   ]);
 });
 

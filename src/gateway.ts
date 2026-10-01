@@ -79,7 +79,7 @@ export class Gateway {
           ...(signal === undefined ? {} : { signal }),
           ...(this.#options.sleep === undefined ? {} : { sleep: this.#options.sleep }),
         });
-        return { ...response, provider: adapter.name };
+        return { ...response, provider: adapter.name, requestId };
       } catch (error) {
         const failure = normalizeProviderError(adapter.name, error);
         if (failure.kind === "aborted" || failure.kind === "invalid_request") {
@@ -119,7 +119,7 @@ export class Gateway {
           ...(signal === undefined ? {} : { signal }),
         })) {
           emitted = true;
-          yield { ...event, provider: adapter.name };
+          yield { ...event, provider: adapter.name, requestId };
         }
         return;
       } catch (error) {
