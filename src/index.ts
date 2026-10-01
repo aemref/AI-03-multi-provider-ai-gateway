@@ -6,6 +6,11 @@ export {
   type CircuitBreakerOptions,
   type CircuitState,
 } from "./circuit-breaker.js";
+export {
+  PricingCatalog,
+  type ModelPricing,
+  type UsageCost,
+} from "./cost.js";
 
 export type {
   FinishReason,
