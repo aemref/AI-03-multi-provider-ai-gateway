@@ -64,7 +64,9 @@ host-supplied `PricingCatalog` converts reported tokens into an estimated USD
 cost without baking changeable vendor prices into the package.
 
 See the [observability contract](docs/observability.md) for the event sequence,
-privacy boundary, cost limitations, and a runnable mock trace.
+privacy boundary, aggregation rules, cost limitations, and runnable mock traces.
+`npm run demo:dashboard` renders a bounded local Markdown dashboard with request,
+token, estimated-cost, latency, and provider-attempt evidence.
 
 ## Streaming and validation
 
@@ -92,9 +94,10 @@ is intentionally a focused subset, not a complete JSON Schema implementation.
 - SSE response encoding with deterministic event contracts.
 - Structured-output and registered tool-call validation.
 - Request IDs plus content-safe latency, usage, cost, retry, and failure traces.
+- Bounded local trace retention, aggregation, and a Markdown cost/latency dashboard.
 
-Trace aggregation, routing benchmarks, and real provider adapters remain
-explicitly tracked in the [technical roadmap](docs/roadmap.md).
+Routing benchmarks, security checks, and real provider adapters remain explicitly
+tracked in the [technical roadmap](docs/roadmap.md).
 
 ## License
 
