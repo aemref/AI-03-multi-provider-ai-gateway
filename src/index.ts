@@ -92,3 +92,10 @@ export {
   type RateLimiter,
   type TokenBucketOptions,
 } from "./rate-limiter.js";
+export {
+  summarizeTraceEvents,
+  type TraceCostTotals,
+  type TraceRequestTotals,
+  type TraceSummary,
+  type TraceTokenTotals,
+} from "./trace-summary.js";
