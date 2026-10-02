@@ -64,10 +64,28 @@ export interface TraceSink {
   record(event: GatewayTraceEvent): void;
 }
 
+export interface InMemoryTraceSinkOptions {
+  readonly maxEvents?: number;
+}
+
 export class InMemoryTraceSink implements TraceSink {
   readonly #events: GatewayTraceEvent[] = [];
+  readonly #maxEvents: number;
+  #droppedEvents = 0;
+
+  constructor(options: InMemoryTraceSinkOptions = {}) {
+    const maxEvents = options.maxEvents ?? 1_000;
+    if (!Number.isSafeInteger(maxEvents) || maxEvents <= 0) {
+      throw new RangeError("maxEvents must be a positive safe integer");
+    }
+    this.#maxEvents = maxEvents;
+  }
 
   record(event: GatewayTraceEvent): void {
+    if (this.#events.length === this.#maxEvents) {
+      this.#events.shift();
+      this.#droppedEvents += 1;
+    }
     this.#events.push(structuredClone(event));
   }
 
@@ -77,6 +95,11 @@ export class InMemoryTraceSink implements TraceSink {
 
   clear(): void {
     this.#events.length = 0;
+    this.#droppedEvents = 0;
+  }
+
+  get droppedEvents(): number {
+    return this.#droppedEvents;
   }
 }
 

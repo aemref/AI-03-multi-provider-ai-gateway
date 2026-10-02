@@ -40,3 +40,31 @@ test("does not let a failing telemetry sink break request handling", () => {
     ),
   );
 });
+
+test("keeps only the newest events within its configured bound", () => {
+  const sink = new InMemoryTraceSink({ maxEvents: 2 });
+
+  sink.record(started);
+  sink.record({ ...started, requestId: "request-2" });
+  sink.record({ ...started, requestId: "request-3" });
+
+  assert.deepEqual(
+    sink.snapshot().map((event) => event.requestId),
+    ["request-2", "request-3"],
+  );
+  assert.equal(sink.droppedEvents, 1);
+
+  sink.clear();
+  assert.equal(sink.droppedEvents, 0);
+});
+
+test("rejects invalid in-memory trace bounds", () => {
+  assert.throws(
+    () => new InMemoryTraceSink({ maxEvents: 0 }),
+    /positive safe integer/,
+  );
+  assert.throws(
+    () => new InMemoryTraceSink({ maxEvents: 1.5 }),
+    /positive safe integer/,
+  );
+});

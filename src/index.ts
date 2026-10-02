@@ -40,6 +40,7 @@ export {
   recordTrace,
   type GatewayOperation,
   type GatewayTraceEvent,
+  type InMemoryTraceSinkOptions,
   type ProviderAttemptFailedTrace,
   type ProviderAttemptStartedTrace,
   type ProviderAttemptSucceededTrace,
