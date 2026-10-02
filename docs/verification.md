@@ -8,7 +8,7 @@ npm audit --audit-level=high -> 0 vulnerabilities
 npm run verify -> typecheck, build, 58 passed, 0 failed
 npm run demo:observability -> request, usage, latency, cost, and trace emitted
 npm run demo:dashboard -> 3 requests, 1 fallback, 14 tokens, $0.000065 estimated
-npm run pack:check -> 60 files, 31.2 kB tarball
+npm run pack:check -> 60 files, 31.3 kB tarball
 node --check examples/node-client.mjs -> passed
 node --check examples/observability.mjs -> passed
 node --check examples/dashboard.mjs -> passed
