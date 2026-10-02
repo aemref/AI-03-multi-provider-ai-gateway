@@ -94,7 +94,9 @@ export {
 } from "./rate-limiter.js";
 export {
   summarizeTraceEvents,
+  type ProviderTraceSummary,
   type TraceCostTotals,
+  type TraceLatencySummary,
   type TraceRequestTotals,
   type TraceSummary,
   type TraceTokenTotals,
