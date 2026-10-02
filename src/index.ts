@@ -11,6 +11,10 @@ export {
   type ModelPricing,
   type UsageCost,
 } from "./cost.js";
+export {
+  renderTraceDashboard,
+  type TraceDashboardOptions,
+} from "./dashboard.js";
 
 export type {
   FinishReason,
