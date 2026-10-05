@@ -64,6 +64,13 @@ export {
   type TraceSink,
 } from "./observability.js";
 export {
+  selectModelRoute,
+  type ModelRoute,
+  type ModelRouteSelection,
+  type ModelRoutingStrategy,
+  type RoutingEstimate,
+} from "./model-router.js";
+export {
   executeWithRetry,
   type RetryAttemptEvent,
   type RetryOptions,
