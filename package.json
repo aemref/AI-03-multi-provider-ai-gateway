@@ -26,6 +26,7 @@
     "verify": "npm run check && npm test",
     "demo:observability": "npm run build && node examples/observability.mjs",
     "demo:dashboard": "npm run build && node examples/dashboard.mjs",
+    "demo:benchmark": "npm run build && node examples/strategy-benchmark.mjs",
     "pack:check": "npm_config_cache=.cache/npm npm pack --dry-run"
   },
   "engines": {

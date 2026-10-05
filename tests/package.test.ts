@@ -20,3 +20,25 @@ test("local dashboard example renders aggregate mock evidence", () => {
   assert.match(result.stdout, /\| primary \| 3 \| 66\.7%/);
   assert.doesNotMatch(result.stdout, /local request|mock output/);
 });
+
+test("strategy benchmark runs the cache and routing workloads", () => {
+  const result = spawnSync(process.execPath, ["examples/strategy-benchmark.mjs"], {
+    encoding: "utf8",
+  });
+
+  assert.equal(result.status, 0, result.stderr);
+  assert.match(result.stdout, /# Deterministic local strategy benchmark/);
+  assert.match(
+    result.stdout,
+    /\| exact_cache \| 6 \| 3 \| 50\.0% \| 1 \| 40 \| \$0\.015000 \|/,
+  );
+  assert.match(
+    result.stdout,
+    /\| lowest_estimated_cost \| 3 \| 0 \| 0\.0% \| 70 \| 70 \| \$0\.003450 \|/,
+  );
+  assert.match(
+    result.stdout,
+    /\| lowest_estimated_latency \| 3 \| 0 \| 0\.0% \| 15 \| 15 \| \$0\.029300 \|/,
+  );
+  assert.match(result.stdout, /no external provider was contacted/);
+});
