@@ -1,6 +1,12 @@
 export const VERSION = "0.1.0";
 
 export {
+  renderStrategyBenchmark,
+  summarizeStrategyBenchmark,
+  type StrategyBenchmarkSample,
+  type StrategyBenchmarkSummary,
+} from "./benchmark.js";
+export {
   ExactRequestCache,
   type ExactRequestCacheOptions,
 } from "./cache.js";
