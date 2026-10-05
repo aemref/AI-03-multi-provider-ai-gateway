@@ -5,6 +5,12 @@ export {
   type ExactRequestCacheOptions,
 } from "./cache.js";
 export {
+  CachingGateway,
+  type CacheStats,
+  type CachingGatewayOptions,
+  type GatewayGenerator,
+} from "./caching-gateway.js";
+export {
   CircuitBreaker,
   withCircuitBreaker,
   type CircuitBreakerOptions,
