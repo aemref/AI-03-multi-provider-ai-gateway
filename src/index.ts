@@ -1,6 +1,10 @@
 export const VERSION = "0.1.0";
 
 export {
+  ExactRequestCache,
+  type ExactRequestCacheOptions,
+} from "./cache.js";
+export {
   CircuitBreaker,
   withCircuitBreaker,
   type CircuitBreakerOptions,
