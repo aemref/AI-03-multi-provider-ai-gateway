@@ -22,7 +22,7 @@ intentionally outside this plan.
 
 - [x] Track tokens, cost, latency, request IDs, and content-safe traces.
 - [x] Aggregate trace events into a bounded local cost/latency dashboard.
-- [ ] Benchmark caching and model-routing strategies.
+- [x] Benchmark caching and model-routing strategies with local deterministic fixtures.
 - [ ] Apply secret-management and input-limit security checks.
 
 ## 4. Release

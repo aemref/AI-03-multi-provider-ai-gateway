@@ -68,6 +68,11 @@ privacy boundary, aggregation rules, cost limitations, and runnable mock traces.
 `npm run demo:dashboard` renders a bounded local Markdown dashboard with request,
 token, estimated-cost, latency, and provider-attempt evidence.
 
+`npm run demo:benchmark` compares an exact-request cache with an uncached local
+mock workload and compares ordered, lowest-cost, and lowest-latency model
+routing. See the [strategy benchmark](docs/strategy-benchmark.md) for its fixed
+inputs, measured output, and limits.
+
 ## Streaming and validation
 
 `Gateway.stream()` emits provider-labelled `delta`, `usage`, and `done` events.
@@ -95,9 +100,10 @@ is intentionally a focused subset, not a complete JSON Schema implementation.
 - Structured-output and registered tool-call validation.
 - Request IDs plus content-safe latency, usage, cost, retry, and failure traces.
 - Bounded local trace retention, aggregation, and a Markdown cost/latency dashboard.
+- Bounded exact-request caching and deterministic model-routing benchmarks.
 
-Routing benchmarks, security checks, and real provider adapters remain explicitly
-tracked in the [technical roadmap](docs/roadmap.md).
+Security checks and real provider adapters remain explicitly tracked in the
+[technical roadmap](docs/roadmap.md).
 
 ## License
 
