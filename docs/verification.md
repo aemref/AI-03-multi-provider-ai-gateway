@@ -1,17 +1,19 @@
 # Local verification
 
-Observed locally on 2026-10-02 with Node.js `v25.2.1` and npm `11.6.2`:
+Observed locally on 2026-10-10 with Node.js `v25.2.1` and npm `11.6.2`:
 
 ```text
 npm ci -> 3 packages installed from the lockfile
 npm audit --audit-level=high -> 0 vulnerabilities
-npm run verify -> typecheck, build, 58 passed, 0 failed
+npm run verify -> typecheck, build, 74 passed, 0 failed
 npm run demo:observability -> request, usage, latency, cost, and trace emitted
 npm run demo:dashboard -> 3 requests, 1 fallback, 14 tokens, $0.000065 estimated
-npm run pack:check -> 60 files, 31.3 kB tarball
+npm run demo:benchmark -> 50% cache hit rate; 3 routing strategies compared
+npm run pack:check -> 74 files, 37.4 kB tarball
 node --check examples/node-client.mjs -> passed
 node --check examples/observability.mjs -> passed
 node --check examples/dashboard.mjs -> passed
+node --check examples/strategy-benchmark.mjs -> passed
 sh -n examples/curl-client.sh -> passed
 Ruby YAML parse + OpenAPI path assertion -> passed
 git diff --check -> passed
@@ -34,6 +36,14 @@ tests cover terminal counts, pricing coverage, provider attempts, nearest-rank
 latency percentiles, empty inputs, and deterministic Markdown rendering. Both
 runnable examples use only local mock adapters; their observed latency is
 smoke-test evidence, not a benchmark.
+
+Cache tests cover TTL expiry, LRU eviction, canonical metadata keys, successful
+response reuse, fresh request IDs, failure exclusion, and pre-aborted callers.
+Routing tests cover ordered, estimated-cost, and estimated-latency selection,
+deterministic ties, malformed profiles, summary percentiles, and stable Markdown.
+The checked-in strategy workload uses explicit simulated latency and catalog
+cost inputs; it is reproducibility evidence for policy behavior, not a provider
+performance measurement.
 
 These are local mock measurements. They do not establish external provider
 availability, throughput, latency, cost, or production readiness.
