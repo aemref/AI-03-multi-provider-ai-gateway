@@ -28,6 +28,11 @@ export {
   type UsageCost,
 } from "./cost.js";
 export {
+  EnvironmentCredentialSource,
+  SecretValue,
+  type EnvironmentCredentialSourceOptions,
+} from "./credentials.js";
+export {
   renderTraceDashboard,
   type TraceDashboardOptions,
 } from "./dashboard.js";
