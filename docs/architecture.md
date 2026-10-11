@@ -29,19 +29,21 @@ flowchart LR
 
 ## Policy order
 
-1. The local token bucket rejects excess work before a request ID or provider
-   call is created.
-2. Each provider receives a bounded number of attempts. Backoff is exponential
+1. Request validation enforces model, message, output-token, and metadata limits
+   before any request ID, trace, rate-limit, or provider side effect.
+2. The local token bucket rejects excess accepted work before a request ID or
+   provider call is created.
+3. Each provider receives a bounded number of attempts. Backoff is exponential
    and capped; both sleep and clock functions are injectable for deterministic
    tests.
-3. Every attempt races the adapter against a timeout, so even an adapter that
+4. Every attempt races the adapter against a timeout, so even an adapter that
    ignores its abort signal cannot hold the gateway open forever.
-4. A circuit-wrapped adapter counts operational failures, opens at its threshold,
+5. A circuit-wrapped adapter counts operational failures, opens at its threshold,
    rejects traffic while open, and permits one half-open recovery probe after the
    reset interval.
-5. After one provider exhausts its attempts, the gateway tries the next adapter.
+6. After one provider exhausts its attempts, the gateway tries the next adapter.
    Caller cancellation and invalid input stop immediately instead of falling back.
-6. A streaming provider can fall back only before its first event. Once a delta
+7. A streaming provider can fall back only before its first event. Once a delta
    is visible, later failure is surfaced instead of appending another provider's
    response. Each event wait has the same configured timeout bound.
 
@@ -74,6 +76,11 @@ Structured output is parsed before validation and failures are classified as
 non-retryable invalid provider responses. Tool definitions form a name allowlist;
 arguments must satisfy the associated schema before an execution boundary.
 
+Provider credential names are mapped explicitly to environment variables.
+Resolved values are redacted from string conversion, JSON, and Node inspection;
+adapters cross an explicit `SecretValue.use()` boundary to construct an outbound
+request. No credential is stored in gateway requests or trace events.
+
 Request IDs are returned to callers and propagated to providers and trace
 events. The gateway records per-attempt and end-to-end latency, normalized
 failures, token usage, and optional host-configured cost estimates. Trace events
@@ -98,3 +105,7 @@ trace-sink failure is contained and cannot change the serving result.
   tokens; they are not billing records.
 - The included in-memory trace sink has no persistence or aggregation and is not
   a production metrics backend.
+- Character limits do not replace host-level HTTP byte limits, authentication,
+  per-tenant quotas, provider token counting, or distributed concurrency controls.
+- Environment variables are only a local credential source. Production hosts
+  should inject rotated credentials from a managed secret service.

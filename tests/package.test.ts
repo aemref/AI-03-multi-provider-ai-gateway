@@ -57,3 +57,15 @@ test("strategy benchmark runs the cache and routing workloads", () => {
   );
   assert.match(result.stdout, /no external provider was contacted/);
 });
+
+test("security demo rejects oversized input without printing its fake secret", () => {
+  const result = spawnSync(process.execPath, ["examples/security.mjs"], {
+    encoding: "utf8",
+  });
+
+  assert.equal(result.status, 0, result.stderr);
+  assert.match(result.stdout, /"credentialRedacted": true/u);
+  assert.match(result.stdout, /"oversizedRequestRejected": true/u);
+  assert.match(result.stdout, /"providerCalls": 0/u);
+  assert.doesNotMatch(result.stdout, /local-example-secret/u);
+});

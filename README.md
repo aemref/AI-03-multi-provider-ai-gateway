@@ -73,6 +73,15 @@ mock workload and compares ordered, lowest-cost, and lowest-latency model
 routing. See the [strategy benchmark](docs/strategy-benchmark.md) for its fixed
 inputs, measured output, and limits.
 
+## Security boundaries
+
+`EnvironmentCredentialSource` resolves only explicitly mapped provider
+credentials and wraps them in a `SecretValue` that redacts common string, JSON,
+and inspection output. `Gateway` applies configurable message, metadata, model,
+and output-token limits before any rate-limit, trace, or provider side effect.
+Run `npm run demo:security` for local evidence and review the [security
+checklist](docs/security.md) before integrating a real adapter.
+
 ## Streaming and validation
 
 `Gateway.stream()` emits provider-labelled `delta`, `usage`, and `done` events.
@@ -101,8 +110,10 @@ is intentionally a focused subset, not a complete JSON Schema implementation.
 - Request IDs plus content-safe latency, usage, cost, retry, and failure traces.
 - Bounded local trace retention, aggregation, and a Markdown cost/latency dashboard.
 - Bounded exact-request caching and deterministic model-routing benchmarks.
+- Redacted environment credentials and fail-closed credential lookup.
+- Default request limits enforced before gateway side effects.
 
-Security checks and real provider adapters remain explicitly tracked in the
+Real provider adapters and the release work remain explicitly tracked in the
 [technical roadmap](docs/roadmap.md).
 
 ## License
