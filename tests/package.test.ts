@@ -1,11 +1,26 @@
 import assert from "node:assert/strict";
 import { spawnSync } from "node:child_process";
+import { readFileSync } from "node:fs";
 import test from "node:test";
 
 import { VERSION } from "../src/index.js";
 
 test("package exposes its version", () => {
   assert.equal(VERSION, "0.1.0");
+});
+
+test("OpenAPI request bounds match the gateway security defaults", () => {
+  const openapi = readFileSync("docs/openapi.yaml", "utf8");
+
+  assert.match(openapi, /maxLength: 128\n/u);
+  assert.match(openapi, /maxItems: 50\n/u);
+  assert.match(openapi, /x-max-total-content-characters: 128000\n/u);
+  assert.match(openapi, /maximum: 32768\n/u);
+  assert.match(openapi, /maxProperties: 20\n/u);
+  assert.match(
+    openapi,
+    /required: \[id, model, message, finishReason, usage, provider, requestId\]/u,
+  );
 });
 
 test("local dashboard example renders aggregate mock evidence", () => {
