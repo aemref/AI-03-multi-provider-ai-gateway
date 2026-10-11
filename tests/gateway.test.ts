@@ -86,6 +86,26 @@ test("requires unique named providers", () => {
   );
 });
 
+test("rejects oversized input before rate limiting, tracing, or provider calls", async () => {
+  const adapter = new ScriptedMockAdapter("primary", [response]);
+  const traceSink = new InMemoryTraceSink();
+  let rateLimitCalls = 0;
+  const gateway = new Gateway([adapter], {
+    requestLimits: { maxTotalMessageCharacters: 4 },
+    rateLimiter: { acquire: () => void (rateLimitCalls += 1) },
+    traceSink,
+  });
+
+  await assert.rejects(
+    gateway.generate(request),
+    (error: unknown) =>
+      error instanceof GatewayError && error.kind === "invalid_request",
+  );
+  assert.equal(rateLimitCalls, 0);
+  assert.equal(adapter.calls.length, 0);
+  assert.deepEqual(traceSink.snapshot(), []);
+});
+
 test("records request, attempt, latency, usage, and cost without prompt content", async () => {
   const traceSink = new InMemoryTraceSink();
   const times = [100, 101, 106, 110];

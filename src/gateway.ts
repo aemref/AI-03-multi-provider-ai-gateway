@@ -9,6 +9,11 @@ import type {
 } from "./contracts.js";
 import type { PricingCatalog } from "./cost.js";
 import { GatewayError, normalizeProviderError } from "./errors.js";
+import {
+  assertGatewayRequestWithinLimits,
+  createGatewayRequestLimits,
+  type GatewayRequestLimits,
+} from "./input-limits.js";
 import { recordTrace, type TraceSink } from "./observability.js";
 import type { RateLimiter } from "./rate-limiter.js";
 import { executeWithRetry, type RetryAttemptEvent } from "./retry.js";
@@ -25,6 +30,7 @@ export interface GatewayOptions {
   readonly now?: () => number;
   readonly traceSink?: TraceSink;
   readonly pricingCatalog?: PricingCatalog;
+  readonly requestLimits?: Partial<GatewayRequestLimits>;
 }
 
 const DEFAULT_OPTIONS = {
@@ -36,10 +42,15 @@ const DEFAULT_OPTIONS = {
 
 export class Gateway {
   readonly #adapters: readonly ProviderAdapter[];
+  readonly #requestLimits: Readonly<GatewayRequestLimits>;
   readonly #options: Required<
     Omit<
       GatewayOptions,
-      "sleep" | "rateLimiter" | "traceSink" | "pricingCatalog"
+      | "sleep"
+      | "rateLimiter"
+      | "traceSink"
+      | "pricingCatalog"
+      | "requestLimits"
     >
   > &
     Pick<
@@ -57,6 +68,7 @@ export class Gateway {
     }
 
     this.#adapters = [...adapters];
+    this.#requestLimits = createGatewayRequestLimits(options.requestLimits);
     this.#options = {
       timeoutMs: options.timeoutMs ?? DEFAULT_OPTIONS.timeoutMs,
       maxAttemptsPerProvider:
@@ -83,6 +95,7 @@ export class Gateway {
     request: GatewayRequest,
     signal?: AbortSignal,
   ): Promise<GatewayResponse> {
+    assertGatewayRequestWithinLimits(request, this.#requestLimits);
     this.#options.rateLimiter?.acquire();
     const requestId = this.#options.createRequestId();
     const startedAt = this.#options.now();
@@ -152,6 +165,7 @@ export class Gateway {
     request: GatewayRequest,
     signal?: AbortSignal,
   ): AsyncIterable<GatewayStreamEvent> {
+    assertGatewayRequestWithinLimits(request, this.#requestLimits);
     this.#options.rateLimiter?.acquire();
     const requestId = this.#options.createRequestId();
     const startedAt = this.#options.now();

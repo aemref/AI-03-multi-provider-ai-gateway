@@ -91,6 +91,28 @@ test("falls back when a stream fails before emitting data", async () => {
   assert.equal(events[0]?.provider, "fallback");
 });
 
+test("rejects oversized streaming input before opening a provider stream", async () => {
+  let streamCalls = 0;
+  const adapter = streamingAdapter("primary", async function* () {
+    streamCalls += 1;
+    yield { type: "done", finishReason: "stop" };
+  });
+  const gateway = new Gateway([adapter], {
+    requestLimits: { maxMessageCharacters: 4 },
+  });
+
+  await assert.rejects(
+    async () => {
+      for await (const _event of gateway.stream(request)) {
+        // Input validation must fail before iteration reaches the adapter.
+      }
+    },
+    (error: unknown) =>
+      error instanceof GatewayError && error.kind === "invalid_request",
+  );
+  assert.equal(streamCalls, 0);
+});
+
 test("does not splice a fallback into a partially emitted stream", async () => {
   let fallbackCalled = false;
   const primary = streamingAdapter("primary", async function* () {
