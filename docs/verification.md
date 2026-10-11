@@ -1,19 +1,21 @@
 # Local verification
 
-Observed locally on 2026-10-10 with Node.js `v25.2.1` and npm `11.6.2`:
+Observed locally on 2026-10-11 with Node.js `v25.2.1` and npm `11.6.2`:
 
 ```text
 npm ci -> 3 packages installed from the lockfile
 npm audit --audit-level=high -> 0 vulnerabilities
-npm run verify -> typecheck, build, 74 passed, 0 failed
+npm run verify -> typecheck, build, 87 passed, 0 failed
 npm run demo:observability -> request, usage, latency, cost, and trace emitted
 npm run demo:dashboard -> 3 requests, 1 fallback, 14 tokens, $0.000065 estimated
 npm run demo:benchmark -> 50% cache hit rate; 3 routing strategies compared
-npm run pack:check -> 74 files, 37.4 kB tarball
+npm run demo:security -> credential redacted; oversized input rejected; 0 provider calls
+npm run pack:check -> 82 files, 42.0 kB tarball
 node --check examples/node-client.mjs -> passed
 node --check examples/observability.mjs -> passed
 node --check examples/dashboard.mjs -> passed
 node --check examples/strategy-benchmark.mjs -> passed
+node --check examples/security.mjs -> passed
 sh -n examples/curl-client.sh -> passed
 Ruby YAML parse + OpenAPI path assertion -> passed
 git diff --check -> passed
@@ -44,6 +46,12 @@ deterministic ties, malformed profiles, summary percentiles, and stable Markdown
 The checked-in strategy workload uses explicit simulated latency and catalog
 cost inputs; it is reproducibility evidence for policy behavior, not a provider
 performance measurement.
+
+Security tests cover explicit provider-to-environment mapping, missing and empty
+credentials, redaction from strings, JSON, and Node inspection, limit
+configuration, individual and aggregate message bounds, numeric controls,
+metadata limits, and rejection before rate limiting, traces, or provider calls.
+The OpenAPI checks pin the matching HTTP boundary and response request ID.
 
 These are local mock measurements. They do not establish external provider
 availability, throughput, latency, cost, or production readiness.
