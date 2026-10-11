@@ -61,6 +61,12 @@ export {
   type GatewayErrorOptions,
 } from "./errors.js";
 export {
+  assertGatewayRequestWithinLimits,
+  createGatewayRequestLimits,
+  DEFAULT_GATEWAY_REQUEST_LIMITS,
+  type GatewayRequestLimits,
+} from "./input-limits.js";
+export {
   InMemoryTraceSink,
   recordTrace,
   type GatewayOperation,
