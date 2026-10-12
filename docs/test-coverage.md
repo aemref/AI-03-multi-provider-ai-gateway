@@ -7,10 +7,18 @@ The release gate uses Node's built-in test coverage and fails below 85% lines,
 npm run coverage:check
 ```
 
-The command compiles the TypeScript project, discovers every compiled
-`dist/tests/*.test.js` file, runs the suite with
-`--experimental-test-coverage`, parses the aggregate row, and enforces all three
-thresholds on Node 20 or newer.
+The command compiles the TypeScript project into a temporary source-map-free
+`coverage/` tree, runs the in-process compiled tests with
+`--experimental-test-coverage`, parses LCOV records only for `coverage/src/`,
+and enforces all three thresholds on Node 20 or newer. Filtering source records
+keeps test-file coverage out of the aggregate even on Node versions that report
+it by default. The dedicated build avoids a Node 20 coverage reporter failure
+on TypeScript source maps without changing the distributable build.
+`package.test.js` is run by
+`npm run verify` but excluded from this second pass because its child-process
+examples trigger a Node 20 coverage-reporting failure. The examples are still
+exercised as release smoke tests; their process coverage is not merged into the
+reported percentages.
 
 ## Measured result
 
@@ -18,7 +26,7 @@ Observed locally on 2026-10-12 with Node.js `v25.2.1`:
 
 | Scope | Tests | Lines | Branches | Functions |
 | --- | ---: | ---: | ---: | ---: |
-| Executed source and examples | 89 passed | 93.54% | 86.69% | 94.94% |
+| Executed source modules | 82 passed | 92.17% | 85.71% | 95.04% |
 
 The report includes only modules executed by this suite. It must not be read as
 evidence for real-provider adapters, a production HTTP host, external retrieval
