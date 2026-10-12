@@ -37,10 +37,12 @@ assert.ok(
 for (const path of [
   "LICENSE",
   "README.md",
+  "CHANGELOG.md",
   "package.json",
   "dist/src/index.js",
   "dist/src/index.d.ts",
   "docs/architecture.md",
+  "docs/releasing.md",
   "docs/roadmap.md",
   "examples/node-client.mjs",
 ]) {

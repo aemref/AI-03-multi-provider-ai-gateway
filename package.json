@@ -15,6 +15,7 @@
     "dist/src",
     "docs",
     "examples",
+    "CHANGELOG.md",
     "README.md",
     "LICENSE"
   ],

@@ -58,6 +58,7 @@ test("package manifest exposes one ESM entry point and bounded release files", (
     "dist/src",
     "docs",
     "examples",
+    "CHANGELOG.md",
     "README.md",
     "LICENSE",
   ]);
