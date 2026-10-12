@@ -5,8 +5,63 @@ import test from "node:test";
 
 import { VERSION } from "../src/index.js";
 
-test("package exposes its version", () => {
-  assert.equal(VERSION, "0.1.0");
+interface PackageManifest {
+  readonly name: string;
+  readonly version: string;
+  readonly type: string;
+  readonly main: string;
+  readonly types: string;
+  readonly exports: {
+    readonly ".": {
+      readonly types: string;
+      readonly import: string;
+    };
+  };
+  readonly files: readonly string[];
+  readonly engines: { readonly node: string };
+}
+
+interface PackageLock {
+  readonly version: string;
+  readonly packages: {
+    readonly "": { readonly version: string };
+  };
+}
+
+const packageManifest = JSON.parse(
+  readFileSync("package.json", "utf8"),
+) as PackageManifest;
+const packageLock = JSON.parse(
+  readFileSync("package-lock.json", "utf8"),
+) as PackageLock;
+
+test("release version stays synchronized across public metadata", () => {
+  const openapi = readFileSync("docs/openapi.yaml", "utf8");
+
+  assert.match(packageManifest.version, /^\d+\.\d+\.\d+$/u);
+  assert.equal(packageManifest.version, VERSION);
+  assert.equal(packageLock.version, VERSION);
+  assert.equal(packageLock.packages[""].version, VERSION);
+  assert.match(openapi, new RegExp(`version: ${VERSION.replaceAll(".", "\\.")}`));
+});
+
+test("package manifest exposes one ESM entry point and bounded release files", () => {
+  assert.equal(packageManifest.name, "multi-provider-ai-gateway");
+  assert.equal(packageManifest.type, "module");
+  assert.equal(packageManifest.main, "./dist/src/index.js");
+  assert.equal(packageManifest.types, "./dist/src/index.d.ts");
+  assert.deepEqual(packageManifest.exports["."], {
+    types: "./dist/src/index.d.ts",
+    import: "./dist/src/index.js",
+  });
+  assert.deepEqual(packageManifest.files, [
+    "dist/src",
+    "docs",
+    "examples",
+    "README.md",
+    "LICENSE",
+  ]);
+  assert.equal(packageManifest.engines.node, ">=20");
 });
 
 test("OpenAPI request bounds match the gateway security defaults", () => {
