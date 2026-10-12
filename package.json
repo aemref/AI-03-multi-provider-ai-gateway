@@ -25,6 +25,7 @@
     "check": "tsc -p tsconfig.json --noEmit",
     "test": "npm run build && node --test dist/tests/*.test.js",
     "verify": "npm run check && npm test",
+    "coverage:check": "npm run build && node scripts/check-coverage.mjs",
     "demo:observability": "npm run build && node examples/observability.mjs",
     "demo:dashboard": "npm run build && node examples/dashboard.mjs",
     "demo:benchmark": "npm run build && node examples/strategy-benchmark.mjs",
