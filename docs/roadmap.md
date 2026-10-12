@@ -27,6 +27,7 @@ intentionally outside this plan.
 
 ## 4. Release
 
-- [ ] Package the gateway for npm with SemVer and a changelog.
-- [ ] Report contract and integration test coverage.
-- [ ] Publish an integration guide and verified v1.0.0 release.
+- [x] Package the gateway for npm with SemVer and a changelog.
+- [x] Report contract and integration test coverage.
+- [x] Publish a RAG and agent integration guide with executable local evidence.
+- [ ] Verify and publish the v1.0.0 release.

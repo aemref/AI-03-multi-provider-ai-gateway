@@ -14,6 +14,7 @@ Requirements: Node.js 20 or newer.
 ```bash
 npm ci
 npm run verify
+npm run coverage:check
 npm run pack:check
 ```
 
@@ -82,6 +83,18 @@ and output-token limits before any rate-limit, trace, or provider side effect.
 Run `npm run demo:security` for local evidence and review the [security
 checklist](docs/security.md) before integrating a real adapter.
 
+## Release readiness
+
+The project is currently a `0.1.0` development package; no stable release or npm
+publication is claimed. The [changelog](CHANGELOG.md), [release
+policy](docs/releasing.md), deterministic package inspection, and enforced [test
+coverage report](docs/test-coverage.md) define the remaining stable-release
+boundary.
+
+The [RAG and agent integration guide](docs/integration-guide.md) separates
+gateway responsibilities from retrieval, citation, authorization, and tool
+execution. Run `npm run demo:integration` for its local mock evidence.
+
 ## Streaming and validation
 
 `Gateway.stream()` emits provider-labelled `delta`, `usage`, and `done` events.
@@ -112,9 +125,11 @@ is intentionally a focused subset, not a complete JSON Schema implementation.
 - Bounded exact-request caching and deterministic model-routing benchmarks.
 - Redacted environment credentials and fail-closed credential lookup.
 - Default request limits enforced before gateway side effects.
+- Synchronized SemVer metadata and bounded dry-run package inspection.
+- Enforced coverage thresholds and an executable RAG/agent boundary example.
 
-Real provider adapters and the release work remain explicitly tracked in the
-[technical roadmap](docs/roadmap.md).
+Real provider adapters and the verified stable release remain explicitly tracked
+in the [technical roadmap](docs/roadmap.md).
 
 ## License
 

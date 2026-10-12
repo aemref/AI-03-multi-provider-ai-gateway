@@ -33,6 +33,9 @@ jobs:
       - name: Verify types, tests, and build
         run: npm run verify
 
+      - name: Enforce test coverage
+        run: npm run coverage:check
+
       - name: Inspect publishable package
         run: npm run pack:check
 
