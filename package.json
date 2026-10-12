@@ -30,6 +30,7 @@
     "demo:dashboard": "npm run build && node examples/dashboard.mjs",
     "demo:benchmark": "npm run build && node examples/strategy-benchmark.mjs",
     "demo:security": "npm run build && node examples/security.mjs",
+    "demo:integration": "npm run build && node examples/rag-agent-integration.mjs",
     "pack:check": "npm run build && node scripts/check-package.mjs"
   },
   "engines": {

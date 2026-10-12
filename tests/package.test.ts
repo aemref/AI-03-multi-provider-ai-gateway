@@ -125,3 +125,19 @@ test("security demo rejects oversized input without printing its fake secret", (
   assert.match(result.stdout, /"providerCalls": 0/u);
   assert.doesNotMatch(result.stdout, /local-example-secret/u);
 });
+
+test("RAG and agent example keeps tool execution outside the gateway", () => {
+  const result = spawnSync(
+    process.execPath,
+    ["examples/rag-agent-integration.mjs"],
+    { encoding: "utf8" },
+  );
+
+  assert.equal(result.status, 0, result.stderr);
+  assert.match(result.stdout, /"requestId": "rag-request-001"/u);
+  assert.match(result.stdout, /"provider": "local-rag-mock"/u);
+  assert.match(result.stdout, /"citationIds": \[/u);
+  assert.match(result.stdout, /"name": "fetch_lesson"/u);
+  assert.match(result.stdout, /"lessonId": "lesson-42"/u);
+  assert.match(result.stdout, /"toolExecuted": false/u);
+});

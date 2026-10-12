@@ -42,9 +42,11 @@ for (const path of [
   "dist/src/index.js",
   "dist/src/index.d.ts",
   "docs/architecture.md",
+  "docs/integration-guide.md",
   "docs/releasing.md",
   "docs/roadmap.md",
   "examples/node-client.mjs",
+  "examples/rag-agent-integration.mjs",
 ]) {
   assert.ok(paths.has(path), `publishable archive is missing ${path}`);
 }
