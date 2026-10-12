@@ -1,23 +1,22 @@
 # Local verification
 
-Observed locally on 2026-10-11 with Node.js `v25.2.1` and npm `11.6.2`:
+Observed locally on 2026-10-12 with Node.js `v25.2.1` and npm `11.6.2`:
 
 ```text
 npm ci -> 3 packages installed from the lockfile
 npm audit --audit-level=high -> 0 vulnerabilities
-npm run verify -> typecheck, build, 87 passed, 0 failed
+npm run verify -> typecheck, build, 89 passed, 0 failed
+npm run coverage:check -> 93.54% lines, 86.69% branches, 94.94% functions
 npm run demo:observability -> request, usage, latency, cost, and trace emitted
 npm run demo:dashboard -> 3 requests, 1 fallback, 14 tokens, $0.000065 estimated
 npm run demo:benchmark -> 50% cache hit rate; 3 routing strategies compared
 npm run demo:security -> credential redacted; oversized input rejected; 0 provider calls
-npm run pack:check -> 82 files, 42.0 kB tarball
-node --check examples/node-client.mjs -> passed
-node --check examples/observability.mjs -> passed
-node --check examples/dashboard.mjs -> passed
-node --check examples/strategy-benchmark.mjs -> passed
-node --check examples/security.mjs -> passed
+npm run demo:integration -> grounded mock response; tool validated but not executed
+npm run pack:check -> 87 files, 46.1 kB tarball
+node --check for examples/*.mjs and scripts/*.mjs -> 8 passed
 sh -n examples/curl-client.sh -> passed
 Ruby YAML parse + OpenAPI path assertion -> passed
+package.json and package-lock.json JSON parse -> passed
 git diff --check -> passed
 ```
 
@@ -52,6 +51,14 @@ credentials, redaction from strings, JSON, and Node inspection, limit
 configuration, individual and aggregate message bounds, numeric controls,
 metadata limits, and rejection before rate limiting, traces, or provider calls.
 The OpenAPI checks pin the matching HTTP boundary and response request ID.
+
+Release tests synchronize the package, lockfile, exported, and OpenAPI versions;
+pin the ESM and declaration entry points; and exercise every deterministic local
+example. The dry-run archive gate requires runtime code, declarations,
+documentation, examples, license, and changelog while excluding TypeScript
+source, tests, scripts, CI internals, and environment files. The RAG/agent
+example verifies citation-ID propagation and tool-call schema validation while
+explicitly proving that no tool was authorized or executed.
 
 These are local mock measurements. They do not establish external provider
 availability, throughput, latency, cost, or production readiness.
