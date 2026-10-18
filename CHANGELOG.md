@@ -6,6 +6,10 @@ All notable changes to this project are recorded here. The project follows
 
 ## [Unreleased]
 
+No changes yet.
+
+## [1.0.0] - 2026-10-18
+
 ### Added
 
 - Provider-neutral generation and streaming contracts with deterministic mock
@@ -35,4 +39,5 @@ All notable changes to this project are recorded here. The project follows
 - Cost and latency examples are reproducibility fixtures, not production
   measurements.
 
-[Unreleased]: https://github.com/aemref/AI-03-multi-provider-ai-gateway/compare/v0.1.0...HEAD
+[Unreleased]: https://github.com/aemref/AI-03-multi-provider-ai-gateway/compare/v1.0.0...HEAD
+[1.0.0]: https://github.com/aemref/AI-03-multi-provider-ai-gateway/releases/tag/v1.0.0
