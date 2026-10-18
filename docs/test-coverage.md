@@ -22,11 +22,11 @@ reported percentages.
 
 ## Measured result
 
-Observed locally on 2026-10-12 with Node.js `v25.2.1`:
+Observed locally on 2026-10-18 with Node.js `v25.2.1`:
 
 | Scope | Tests | Lines | Branches | Functions |
 | --- | ---: | ---: | ---: | ---: |
-| Executed source modules | 82 passed | 92.17% | 85.71% | 95.04% |
+| Executed source modules | 84 passed | 92.17% | 85.71% | 95.04% |
 
 The report includes only modules executed by this suite. It must not be read as
 evidence for real-provider adapters, a production HTTP host, external retrieval

@@ -85,11 +85,12 @@ checklist](docs/security.md) before integrating a real adapter.
 
 ## Release readiness
 
-Version `1.0.0` is prepared as a stable npm-format package. A matching Git tag
-must pass the [release policy](docs/releasing.md), deterministic package
-inspection, and enforced [test coverage report](docs/test-coverage.md) before
-the workflow creates a GitHub release and attaches the tarball. Publication to
-the npm registry is not claimed because this repository has no registry token.
+Version `1.0.0` is published as a verified [GitHub
+release](https://github.com/aemref/AI-03-multi-provider-ai-gateway/releases/tag/v1.0.0)
+with an attached npm-format package. The matching tag passed the [release
+policy](docs/releasing.md), deterministic package inspection, and enforced [test
+coverage report](docs/test-coverage.md). Publication to the npm registry is not
+claimed because this repository has no authenticated registry publisher.
 
 The [RAG and agent integration guide](docs/integration-guide.md) separates
 gateway responsibilities from retrieval, citation, authorization, and tool
@@ -128,8 +129,8 @@ is intentionally a focused subset, not a complete JSON Schema implementation.
 - Synchronized SemVer metadata and bounded dry-run package inspection.
 - Enforced coverage thresholds and an executable RAG/agent boundary example.
 
-Real provider adapters remain explicitly outside the local mock scope. GitHub
-release verification is tracked in the [technical roadmap](docs/roadmap.md).
+Real provider adapters and npm registry publication remain explicitly outside
+the verified local mock and GitHub release scope.
 
 ## License
 

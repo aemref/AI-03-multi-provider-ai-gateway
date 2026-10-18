@@ -30,4 +30,4 @@ intentionally outside this plan.
 - [x] Package the gateway for npm with SemVer and a changelog.
 - [x] Report contract and integration test coverage.
 - [x] Publish a RAG and agent integration guide with executable local evidence.
-- [ ] Verify and publish the v1.0.0 release.
+- [x] Verify and publish the v1.0.0 GitHub release with its npm-format archive.

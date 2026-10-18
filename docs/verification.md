@@ -1,24 +1,36 @@
 # Local verification
 
-Observed locally on 2026-10-12 with Node.js `v25.2.1` and npm `11.6.2`:
+Observed locally on 2026-10-18 with Node.js `v25.2.1` and npm `11.6.2`:
 
 ```text
 npm ci -> 3 packages installed from the lockfile
 npm audit --audit-level=high -> 0 vulnerabilities
-npm run verify -> typecheck, build, 89 passed, 0 failed
-npm run coverage:check -> 82 passed; 92.17% lines, 85.71% branches, 95.04% functions
+npm run verify -> typecheck, build, 92 passed, 0 failed
+npm run coverage:check -> 84 passed; 92.17% lines, 85.71% branches, 95.04% functions
 npm run demo:observability -> request, usage, latency, cost, and trace emitted
 npm run demo:dashboard -> 3 requests, 1 fallback, 14 tokens, $0.000065 estimated
 npm run demo:benchmark -> 50% cache hit rate; 3 routing strategies compared
 npm run demo:security -> credential redacted; oversized input rejected; 0 provider calls
 npm run demo:integration -> grounded mock response; tool validated but not executed
-npm run pack:check -> 87 files, 46.5 kB tarball
-node --check for examples/*.mjs and scripts/*.mjs -> 8 passed
+npm run pack:check -> 87 files, 46.7 kB tarball
+npm run release:check -- v1.0.0 -> synchronized release metadata and tag
+node --check for examples/*.mjs and scripts/*.mjs -> 9 passed
 sh -n examples/curl-client.sh -> passed
 Ruby YAML parse + OpenAPI path assertion -> passed
 package.json and package-lock.json JSON parse -> passed
 git diff --check -> passed
 ```
+
+GitHub Actions run `39121876662` passed the Node.js 20 and 22 CI matrix on
+commit `4c89b8d`. Tag workflow run `39121930068` repeated the release gates and
+published the non-draft, non-prerelease `v1.0.0` GitHub release. Its
+`multi-provider-ai-gateway-1.0.0.tgz` asset is 46,785 bytes with GitHub-reported
+SHA-256 digest
+`c6a647de5e731be2e7ec60e10bc547cd0936165cbdf45447819bae160856e1d0`.
+The annotated tag and remote `main` both resolve to `4c89b8d` at release time.
+
+`npm whoami` returned `ENEEDAUTH`, and the registry lookup returned `E404` for
+the package name on 2026-10-18. No npm registry publication is claimed.
 
 The test suite includes contract compatibility, failure classification, capped
 retry delays, timeout containment, two-provider fallback, deterministic token
