@@ -85,11 +85,11 @@ checklist](docs/security.md) before integrating a real adapter.
 
 ## Release readiness
 
-The project is currently a `0.1.0` development package; no stable release or npm
-publication is claimed. The [changelog](CHANGELOG.md), [release
-policy](docs/releasing.md), deterministic package inspection, and enforced [test
-coverage report](docs/test-coverage.md) define the remaining stable-release
-boundary.
+Version `1.0.0` is prepared as a stable npm-format package. A matching Git tag
+must pass the [release policy](docs/releasing.md), deterministic package
+inspection, and enforced [test coverage report](docs/test-coverage.md) before
+the workflow creates a GitHub release and attaches the tarball. Publication to
+the npm registry is not claimed because this repository has no registry token.
 
 The [RAG and agent integration guide](docs/integration-guide.md) separates
 gateway responsibilities from retrieval, citation, authorization, and tool
@@ -128,8 +128,8 @@ is intentionally a focused subset, not a complete JSON Schema implementation.
 - Synchronized SemVer metadata and bounded dry-run package inspection.
 - Enforced coverage thresholds and an executable RAG/agent boundary example.
 
-Real provider adapters and the verified stable release remain explicitly tracked
-in the [technical roadmap](docs/roadmap.md).
+Real provider adapters remain explicitly outside the local mock scope. GitHub
+release verification is tracked in the [technical roadmap](docs/roadmap.md).
 
 ## License
 

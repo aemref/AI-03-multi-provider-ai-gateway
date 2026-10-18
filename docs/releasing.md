@@ -1,8 +1,9 @@
 # Release policy
 
-The repository is currently a `0.1.0` development package. No `v1.0.0` release
-or registry publication is claimed until every gate below is observed on the
-exact commit being tagged.
+The repository prepares `v1.0.0` as a stable npm-format package. No GitHub
+release is claimed until every gate below is observed on the exact commit being
+tagged. npm registry publication is a separate operation and is not claimed
+without an authenticated publisher.
 
 ## Semantic versioning
 
@@ -25,12 +26,14 @@ and `docs/openapi.yaml`. Automated tests reject a mismatch.
    internals.
 5. Move the relevant `Unreleased` notes under a dated `1.0.0` heading and update
    all four version locations together.
-6. Repeat every gate on that exact commit before creating an annotated `v1.0.0`
-   tag, GitHub release, or npm publication.
+6. Run `npm run release:check -- v1.0.0` and repeat every gate on that exact
+   commit before creating an annotated `v1.0.0` tag.
+7. Push the tag only after `main` CI passes. The tag workflow repeats the gates,
+   builds an npm-compatible tarball, and attaches it to the GitHub release.
 
 A failed gate stops the release. Tags, release notes, and package publication
 must never be used as evidence before their remote state is independently
-verified.
+verified. The GitHub tarball is not evidence of npm registry publication.
 
 ## Rollback boundary
 
