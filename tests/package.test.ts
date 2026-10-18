@@ -34,6 +34,21 @@ const packageManifest = JSON.parse(
 const packageLock = JSON.parse(
   readFileSync("package-lock.json", "utf8"),
 ) as PackageLock;
+const changelog = readFileSync("CHANGELOG.md", "utf8");
+
+test("stable release metadata identifies the v1.0.0 release", () => {
+  assert.equal(packageManifest.version, "1.0.0");
+  assert.equal(VERSION, "1.0.0");
+  assert.match(changelog, /^## \[1\.0\.0\] - 2026-10-18$/mu);
+  assert.match(
+    changelog,
+    /^\[Unreleased\]: https:\/\/github\.com\/aemref\/AI-03-multi-provider-ai-gateway\/compare\/v1\.0\.0\.\.\.HEAD$/mu,
+  );
+  assert.match(
+    changelog,
+    /^\[1\.0\.0\]: https:\/\/github\.com\/aemref\/AI-03-multi-provider-ai-gateway\/releases\/tag\/v1\.0\.0$/mu,
+  );
+});
 
 test("release version stays synchronized across public metadata", () => {
   const openapi = readFileSync("docs/openapi.yaml", "utf8");
