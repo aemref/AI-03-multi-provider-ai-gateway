@@ -12,7 +12,7 @@ npm run demo:dashboard -> 3 requests, 1 fallback, 14 tokens, $0.000065 estimated
 npm run demo:benchmark -> 50% cache hit rate; 3 routing strategies compared
 npm run demo:security -> credential redacted; oversized input rejected; 0 provider calls
 npm run demo:integration -> grounded mock response; tool validated but not executed
-npm run pack:check -> 87 files, 46.7 kB tarball
+npm run pack:check -> 87 files, 47.0 kB post-release main tarball
 npm run release:check -- v1.0.0 -> synchronized release metadata and tag
 node --check for examples/*.mjs and scripts/*.mjs -> 9 passed
 sh -n examples/curl-client.sh -> passed
