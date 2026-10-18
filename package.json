@@ -1,6 +1,6 @@
 {
   "name": "multi-provider-ai-gateway",
-  "version": "0.1.0",
+  "version": "1.0.0",
   "description": "Provider-neutral AI gateway resilience primitives",
   "type": "module",
   "main": "./dist/src/index.js",

@@ -1,7 +1,7 @@
 openapi: 3.1.0
 info:
   title: Multi-Provider AI Gateway Boundary
-  version: 0.1.0
+  version: 1.0.0
   description: >-
     HTTP boundary for a host application built with this library. The package
     supplies gateway and SSE primitives; it does not start an HTTP server.
